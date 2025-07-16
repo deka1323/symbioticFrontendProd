@@ -1,0 +1,161 @@
+{
+  "SampleData": {
+    "PigFarm-Pigs": [
+      {
+        "PK": "PIG#PIG001",
+        "SK": "PROFILE",
+        "pigId": "PIG001",
+        "sex": "female",
+        "breed": "Yorkshire",
+        "motherPigId": "PIG090",
+        "fatherPigId": "BOAR05",
+        "weight": 45.5,
+        "dateOfBirth": "2023-03-15",
+        "currentStatus": "living",
+        "currentStage": "breeding",
+        "pregnancyCount": 2,
+        "origin": "in-house",
+        "isBoar": false,
+        "createdAt": "2023-03-15T10:00:00Z",
+        "updatedAt": "2024-01-30T14:30:00Z",
+        "GSI1PK": "STATUS#living",
+        "GSI1SK": "STAGE#breeding#PIG001",
+        "GSI2PK": "BREED#Yorkshire",
+        "GSI2SK": "SEX#female#PIG001"
+      },
+      {
+        "PK": "PIG#BOAR003",
+        "SK": "PROFILE",
+        "pigId": "BOAR003",
+        "sex": "male",
+        "breed": "Duroc",
+        "motherPigId": null,
+        "fatherPigId": null,
+        "weight": 180.0,
+        "dateOfBirth": "2022-01-10",
+        "currentStatus": "living",
+        "currentStage": "breeding",
+        "pregnancyCount": 0,
+        "origin": "purchased",
+        "isBoar": true,
+        "createdAt": "2022-01-10T10:00:00Z",
+        "updatedAt": "2024-01-30T14:30:00Z",
+        "GSI1PK": "STATUS#living",
+        "GSI1SK": "STAGE#breeding#BOAR003",
+        "GSI2PK": "BREED#Duroc",
+        "GSI2SK": "SEX#male#BOAR003"
+      }
+    ],
+    "PigFarm-MedicalRecords": [
+      {
+        "PK": "PIG#PIG001",
+        "SK": "MEDICAL#vaccination#2023-04-15#001",
+        "pigId": "PIG001",
+        "recordType": "vaccination",
+        "date": "2023-04-15",
+        "medicineType": "PRRS",
+        "dosage": "2ml",
+        "nextDueDate": "2024-04-15",
+        "administeredBy": "Dr. Smith",
+        "notes": "Annual vaccination",
+        "createdAt": "2023-04-15T09:00:00Z",
+        "GSI1PK": "VACCINE#PRRS",
+        "GSI1SK": "DUE#2024-04-15#PIG001"
+      },
+      {
+        "PK": "PIG#PIG001",
+        "SK": "MEDICAL#deworming#2023-06-01#001",
+        "pigId": "PIG001",
+        "recordType": "deworming",
+        "date": "2023-06-01",
+        "medicineType": "Ivermectin",
+        "dosage": "2ml",
+        "nextDueDate": "2023-12-01",
+        "administeredBy": "Staff A",
+        "notes": "Regular deworming",
+        "createdAt": "2023-06-01T10:00:00Z",
+        "GSI1PK": "DEWORMING#Ivermectin",
+        "GSI1SK": "DATE#2023-06-01#PIG001"
+      }
+    ],
+    "PigFarm-BreedingRecords": [
+      {
+        "PK": "BREEDING#BR001",
+        "SK": "RECORD",
+        "breedingId": "BR001",
+        "sowId": "PIG001",
+        "boarId": "BOAR003",
+        "matingDate": "2024-01-15",
+        "sowBreed": "Yorkshire",
+        "boarBreed": "Duroc",
+        "sowAge": 18,
+        "boarAge": 24,
+        "status": "active",
+        "expectedDeliveryDate": "2024-05-08",
+        "notes": "First breeding for this sow",
+        "createdAt": "2024-01-15T10:00:00Z",
+        "updatedAt": "2024-01-15T10:00:00Z",
+        "GSI1PK": "SOW#PIG001",
+        "GSI1SK": "BREEDING#2024-01-15",
+        "GSI2PK": "BOAR#BOAR003",
+        "GSI2SK": "BREEDING#2024-01-15"
+      }
+    ],
+    "PigFarm-StageRecords": [
+      {
+        "PK": "STAGE#breeding#PIG001",
+        "SK": "RECORD#2024-01-15",
+        "pigId": "PIG001",
+        "stage": "breeding",
+        "entryDate": "2024-01-15",
+        "exitDate": null,
+        "expectedExitDate": "2024-05-08",
+        "stageSpecificData": {
+          "breedingRecordId": "BR001",
+          "boarId": "BOAR003",
+          "matingDate": "2024-01-15"
+        },
+        "status": "active",
+        "notes": "Entered breeding stage after successful mating",
+        "createdAt": "2024-01-15T10:00:00Z",
+        "updatedAt": "2024-01-15T10:00:00Z",
+        "GSI1PK": "STAGE#breeding",
+        "GSI1SK": "STATUS#active#2024-01-15"
+      }
+    ],
+    "PigFarm-FarrowingRecords": [
+      {
+        "PK": "FARROWING#PIG001",
+        "SK": "PREGNANCY#1",
+        "sowId": "PIG001",
+        "pregnancyNumber": 1,
+        "breedingRecordId": "BR001",
+        "farrowingDate": "2023-05-20",
+        "totalBorn": 8,
+        "totalLive": 7,
+        "totalDead": 1,
+        "pigletIds": ["PIG101", "PIG102", "PIG103", "PIG104", "PIG105", "PIG106", "PIG107"],
+        "complications": "None",
+        "notes": "Successful delivery, one stillborn",
+        "createdAt": "2023-05-20T15:30:00Z",
+        "GSI1PK": "FARROWING#2023-05-20",
+        "GSI1SK": "SOW#PIG001"
+      }
+    ],
+    "PigFarm-WeightRecords": [
+      {
+        "PK": "PIG#PIG001",
+        "SK": "WEIGHT#2024-01-30#143000",
+        "pigId": "PIG001",
+        "weight": 45.5,
+        "date": "2024-01-30",
+        "stage": "breeding",
+        "measuredBy": "Staff B",
+        "notes": "Regular weight check",
+        "createdAt": "2024-01-30T14:30:00Z",
+        "GSI1PK": "WEIGHT#2024-01-30",
+        "GSI1SK": "PIG#PIG001"
+      }
+    ]
+  }
+}
