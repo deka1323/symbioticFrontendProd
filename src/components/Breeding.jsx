@@ -5,16 +5,16 @@ import { toast, Toaster } from 'react-hot-toast';
 import {
   addBreedingRecord,
   moveToGestation
-} from '../store/actions/pigActions';
+} from '../../store/actions/pigActions';
 import {
   selectCurrentBreedingRecords,
   selectBreedingHistory,
   selectIsMovingPig,
   selectMovingPigId
-} from '../store/selectors/pigSelectors';
-import AdvancedTable from './common/AdvancedTable';
+} from '../../store/selectors/pigSelectors';
+import AdvancedTable from '../common/AdvancedTable';
 
-const Breeding = () => {
+const BreedingStage = () => {
   const dispatch = useDispatch();
   const [showNewBreeding, setShowNewBreeding] = useState(false);
   const [sowId, setSowId] = useState('');
@@ -36,7 +36,7 @@ const Breeding = () => {
     const newRecord = {
       sowId,
       boarId,
-      sowBreed: 'Yorkshire', // This would come from pig lookup
+      sowBreed: 'Yorkshire',
       boarBreed: 'Duroc',
       sowAge: 18,
       boarAge: 24
@@ -99,15 +99,6 @@ const Breeding = () => {
     },
     { key: 'matingDate', label: 'Mating Date', sortable: true },
     { key: 'inDate', label: 'In Date', sortable: true },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value) => (
-        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-          Active
-        </span>
-      )
-    }
   ];
 
   // History breeding table columns
@@ -137,30 +128,16 @@ const Breeding = () => {
     },
     { key: 'inDate', label: 'In Date', sortable: true },
     { key: 'outDate', label: 'Out Date', sortable: true },
-    {
-      key: 'status',
-      label: 'Status',
-      render: (value) => (
-        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-          Completed
-        </span>
-      )
-    }
   ];
 
   // Action buttons for current breeding
   const currentBreedingActions = [
     {
-      key: 'view',
-      label: 'View Details',
-      className: 'text-pink-600 hover:text-pink-900 text-xs sm:text-sm',
-      render: () => 'View Details'
-    },
-    {
       key: 'move',
       label: 'Move to Gestation',
       className: 'inline-flex items-center px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
       requiresConfirmation: true,
+      confirmationMessage: 'This will move the pig to Gestation stage. This action cannot be reversed.',
       disabled: (item) => isMovingPig && movingPigId === item.id,
       render: (item) => (
         <>
@@ -179,12 +156,6 @@ const Breeding = () => {
 
   // Action buttons for history
   const historyBreedingActions = [
-    {
-      key: 'view',
-      label: 'View Details',
-      className: 'text-pink-600 hover:text-pink-900 text-xs sm:text-sm',
-      render: () => 'View Details'
-    }
   ];
 
   return (
@@ -309,7 +280,8 @@ const Breeding = () => {
                   <AdvancedTable
                     data={currentBreeding}
                     columns={currentBreedingColumns}
-                    searchPlaceholder="Search by Pig ID, Sow ID, or Boar ID..."
+                    searchPlaceholder="Search by Pig ID..."
+                    searchKey="sowId"
                     actionButtons={currentBreedingActions}
                     onAction={handleMoveToGestation}
                   />
@@ -322,7 +294,8 @@ const Breeding = () => {
                   <AdvancedTable
                     data={breedingHistory}
                     columns={historyBreedingColumns}
-                    searchPlaceholder="Search by Pig ID, Sow ID, or Boar ID..."
+                    searchPlaceholder="Search by Pig ID..."
+                    searchKey="sowId"
                     actionButtons={historyBreedingActions}
                     onAction={() => { }}
                   />
@@ -336,4 +309,4 @@ const Breeding = () => {
   );
 };
 
-export default Breeding;
+export default BreedingStage;

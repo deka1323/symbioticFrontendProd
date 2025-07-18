@@ -10,6 +10,15 @@ const GestationStage = () => {
     const dispatch = useDispatch();
     const [selectedFilter, setSelectedFilter] = useState('current');
 
+    // Month filter for history
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
     // Redux selectors
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
@@ -76,6 +85,12 @@ const GestationStage = () => {
             outcome: 'Moved to farrowing'
         }
     ];
+
+    // Filter history records by month
+    const filteredHistoryRecords = mockHistoryRecords.filter(record => {
+        const recordDate = new Date(record.outDate);
+        return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
+    });
 
     // Current records table columns
     const currentRecordsColumns = [
@@ -227,11 +242,33 @@ const GestationStage = () => {
 
                             {selectedFilter === 'history' && (
                                 <div>
+                                    {/* Month Selection for History */}
+                                    <div className="mb-4 flex items-center space-x-4">
+                                        <span className="text-sm font-medium text-gray-700">Filter by month:</span>
+                                        <select
+                                            value={selectedMonth}
+                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            {months.map((month, index) => (
+                                                <option key={index} value={index}>{month}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            {[2023, 2024, 2025].map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Gestation History
                                     </h3>
                                     <AdvancedTable
-                                        data={mockHistoryRecords}
+                                        data={filteredHistoryRecords}
                                         columns={historyRecordsColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="pigId"

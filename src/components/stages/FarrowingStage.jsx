@@ -11,6 +11,16 @@ const FarrowingStage = () => {
     const [selectedFilter, setSelectedFilter] = useState('current');
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
+
+    // Month filter for history
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
     const [editForm, setEditForm] = useState({
         farrowingDate: '',
         stillBorn: 0,
@@ -149,15 +159,6 @@ const FarrowingStage = () => {
         { key: 'mummyBorn', label: 'Mummy Born', sortable: true },
         { key: 'liveBorn', label: 'Live Born', sortable: true },
         { key: 'atw', label: 'ATW', sortable: true }
-    ];
-
-    // Month filter for history
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
     const filteredHistoryRecords = mockHistoryRecords.filter(record => {

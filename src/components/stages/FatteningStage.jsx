@@ -12,6 +12,15 @@ const FatteningStage = () => {
     const [weightRange, setWeightRange] = useState({ min: '', max: '' });
     const [filteredData, setFilteredData] = useState([]);
 
+    // Month filter for history
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
     // Redux selectors
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
@@ -103,6 +112,12 @@ const FatteningStage = () => {
             outcome: 'Sold to market'
         }
     ];
+
+    // Filter history records by month
+    const filteredHistoryRecords = mockHistoryRecords.filter(record => {
+        const recordDate = new Date(record.outDate);
+        return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
+    });
 
     const dataToShow = filteredData.length > 0 ? filteredData : mockCurrentRecords;
 
@@ -277,8 +292,8 @@ const FatteningStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                            ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -287,8 +302,8 @@ const FatteningStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                            ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
@@ -316,11 +331,33 @@ const FatteningStage = () => {
 
                             {selectedFilter === 'history' && (
                                 <div>
+                                    {/* Month Selection for History */}
+                                    <div className="mb-4 flex items-center space-x-4">
+                                        <span className="text-sm font-medium text-gray-700">Filter by month:</span>
+                                        <select
+                                            value={selectedMonth}
+                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                        >
+                                            {months.map((month, index) => (
+                                                <option key={index} value={index}>{month}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                        >
+                                            {[2023, 2024, 2025].map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Fattening History
                                     </h3>
                                     <AdvancedTable
-                                        data={mockHistoryRecords}
+                                        data={filteredHistoryRecords}
                                         columns={historyRecordsColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="pigId"

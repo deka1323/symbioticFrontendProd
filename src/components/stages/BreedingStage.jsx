@@ -21,11 +21,27 @@ const BreedingStage = () => {
     const [boarId, setBoarId] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('current');
 
+    // Month filter for history
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
     // Redux selectors
     const currentBreeding = useSelector(selectCurrentBreedingRecords);
     const breedingHistory = useSelector(selectBreedingHistory);
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
+
+    // Filter history records by month
+    const filteredHistoryRecords = breedingHistory.filter(record => {
+        if (!record.outDate) return false;
+        const recordDate = new Date(record.outDate);
+        return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
+    });
 
     const handleNewBreeding = () => {
         if (!sowId || !boarId) {
@@ -291,8 +307,30 @@ const BreedingStage = () => {
                             {selectedFilter === 'history' && (
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Breeding History</h3>
+                                    {/* Month Selection for History */}
+                                    <div className="mb-4 flex items-center space-x-4">
+                                        <span className="text-sm font-medium text-gray-700">Filter by month:</span>
+                                        <select
+                                            value={selectedMonth}
+                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                        >
+                                            {months.map((month, index) => (
+                                                <option key={index} value={index}>{month}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                        >
+                                            {[2023, 2024, 2025].map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <AdvancedTable
-                                        data={breedingHistory}
+                                        data={filteredHistoryRecords}
                                         columns={historyBreedingColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="sowId"

@@ -18,38 +18,61 @@ const NurseryStage = () => {
         sex: '',
         breed: '',
         csfDate: '',
-        otherVaccinationName: '',
-        otherVaccinationDate: ''
+        otherVaccination: '',
+        otherVaccinationName: ''
     });
 
+    // Month filter for history
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    // Redux selectors
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
 
     const handleMoveToNextStage = async (action, item) => {
         const loadingToast = toast.loading(`Moving litter ${item.litterId} to Fattening stage...`);
+
         try {
             const result = await dispatch(moveToNextStage(item.litterId, 'nursery'));
+
             if (result.success) {
-                toast.success(`Litter ${item.litterId} successfully moved to ${result.nextStage} stage!`, { id: loadingToast });
+                toast.success(`Litter ${item.litterId} successfully moved to ${result.nextStage} stage!`, {
+                    id: loadingToast,
+                    duration: 3000,
+                });
             } else {
-                toast.error('Failed to move litter to next stage', { id: loadingToast });
+                toast.error('Failed to move litter to next stage', {
+                    id: loadingToast,
+                });
             }
         } catch (error) {
-            toast.error('An error occurred while moving the litter', { id: loadingToast });
+            toast.error('An error occurred while moving the litter', {
+                id: loadingToast,
+            });
         }
     };
 
     const handleMovePigletToFattening = async (piglet, parentRecord) => {
-        const loadingToast = toast.loading(`Moving Piglet ${piglet.pigId} to Fattening...`);
+        const loadingToast = toast.loading(`Moving piglet ${piglet.pigId} to Fattening stage...`);
+
         try {
-            const result = await dispatch(moveToNextStage(piglet.pigId, 'nursery'));
-            if (result.success) {
-                toast.success(`Piglet ${piglet.pigId} moved to ${result.nextStage}!`, { id: loadingToast });
-            } else {
-                toast.error('Failed to move piglet to next stage', { id: loadingToast });
-            }
-        } catch (err) {
-            toast.error('An error occurred while moving the piglet', { id: loadingToast });
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            toast.success(`Piglet ${piglet.pigId} successfully moved to Fattening stage!`, {
+                id: loadingToast,
+                duration: 3000,
+            });
+        } catch (error) {
+            toast.error('An error occurred while moving the piglet', {
+                id: loadingToast,
+            });
         }
     };
 
@@ -61,22 +84,27 @@ const NurseryStage = () => {
             sex: piglet.sex || '',
             breed: piglet.breed || '',
             csfDate: piglet.csfDate || '',
-            otherVaccinationName: piglet.otherVaccinationName || '',
-            otherVaccinationDate: piglet.otherVaccination || ''
+            otherVaccination: piglet.otherVaccination || '',
+            otherVaccinationName: piglet.otherVaccinationName || ''
         });
         setShowEditModal(true);
     };
 
     const handleSaveEdit = () => {
+        // Here you would dispatch an action to update the piglet record
         toast.success('Piglet details updated successfully!');
         setShowEditModal(false);
         setEditingPiglet(null);
     };
 
     const toggleRowExpansion = (recordId) => {
-        setExpandedRows(prev => ({ ...prev, [recordId]: !prev[recordId] }));
+        setExpandedRows(prev => ({
+            ...prev,
+            [recordId]: !prev[recordId]
+        }));
     };
 
+    // Mock data for demonstration
     const mockCurrentRecords = [
         {
             id: 'NR001',
@@ -87,7 +115,6 @@ const NurseryStage = () => {
             farrowingDate: '2024-02-10',
             weaningDate: '2024-02-15',
             totalPiglets: 7,
-            status: 'active',
             piglets: [
                 {
                     id: 'P001',
@@ -100,6 +127,21 @@ const NurseryStage = () => {
                     csfDate: '2024-02-20',
                     otherVaccination: '2024-02-25',
                     otherVaccinationName: 'FMD',
+                    inDate: '2024-02-15',
+                    outDate: null,
+                    currentStage: 'nursery'
+                },
+                {
+                    id: 'P002',
+                    pigId: 'PIG102',
+                    dob: '2024-02-10',
+                    dow: '2024-02-15',
+                    weight: 2.8,
+                    sex: 'male',
+                    breed: 'Yorkshire-Duroc',
+                    csfDate: '2024-02-20',
+                    otherVaccination: '',
+                    otherVaccinationName: '',
                     inDate: '2024-02-15',
                     outDate: null,
                     currentStage: 'nursery'
@@ -119,10 +161,15 @@ const NurseryStage = () => {
             farrowingDate: '2023-12-20',
             weaningDate: '2024-01-01',
             totalPiglets: 6,
-            status: 'completed',
             outcome: 'Moved to fattening'
         }
     ];
+
+    // Filter history records by month
+    const filteredHistoryRecords = mockHistoryRecords.filter(record => {
+        const recordDate = new Date(record.outDate);
+        return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
+    });
 
     // Current records table columns
     const currentRecordsColumns = [
@@ -157,15 +204,6 @@ const NurseryStage = () => {
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'weaningDate', label: 'Weaning Date', sortable: true },
         { key: 'totalPiglets', label: 'Total Piglets', sortable: true },
-        {
-            key: 'status',
-            label: 'Status',
-            render: (value) => (
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    {value}
-                </span>
-            )
-        }
     ];
 
     // History records table columns
@@ -213,65 +251,80 @@ const NurseryStage = () => {
     ];
 
     // Action buttons for history
-    const historyRecordsActions = [
-        {
-            key: 'view',
-            label: 'View Details',
-            className: 'text-green-600 hover:text-green-900 text-xs sm:text-sm',
-            render: () => 'View Details'
-        }
-    ];
+    const historyRecordsActions = [];
 
+    // Custom row renderer for expanded piglet details
     const renderExpandedRow = (item) => {
         if (!expandedRows[item.id]) return null;
+
         return (
             <tr key={`${item.id}-expanded`}>
-                <td colSpan={8} className="px-6 py-4 bg-gray-50">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-3 py-2">Pig ID</th>
-                                <th className="px-3 py-2">DOB</th>
-                                <th className="px-3 py-2">Weight</th>
-                                <th className="px-3 py-2">Sex</th>
-                                <th className="px-3 py-2">Breed</th>
-                                <th className="px-3 py-2">CSF Date</th>
-                                <th className="px-3 py-2">Other Vacc.</th>
-                                <th className="px-3 py-2">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {item.piglets.map((piglet) => (
-                                <tr key={piglet.id}>
-                                    <td className="px-3 py-2">{piglet.pigId}</td>
-                                    <td className="px-3 py-2">{piglet.dob}</td>
-                                    <td className="px-3 py-2">{piglet.weight} kg</td>
-                                    <td className="px-3 py-2">{piglet.sex}</td>
-                                    <td className="px-3 py-2">{piglet.breed}</td>
-                                    <td className="px-3 py-2">{piglet.csfDate}</td>
-                                    <td className="px-3 py-2">
-                                        {piglet.otherVaccinationName
-                                            ? `${piglet.otherVaccinationName} (${piglet.otherVaccination})`
-                                            : 'Not given'}
-                                    </td>
-                                    <td className="px-3 py-2">
-                                        <div className="flex gap-2">
-                                            <button onClick={() => handleEditPiglet(piglet, item)} className="text-green-600 text-xs">
-                                                <Edit className="inline h-3 w-3 mr-1" /> Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleMovePigletToFattening(piglet, item)}
-                                                disabled={piglet.currentStage !== 'nursery'}
-                                                className="text-yellow-700 text-xs bg-yellow-100 px-2 py-1 rounded"
-                                            >
-                                                Move
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <td colSpan={currentRecordsColumns.length + 1} className="px-6 py-4 bg-gray-50">
+                    <div className="space-y-4">
+                        <h4 className="font-medium text-gray-900">Piglet Details:</h4>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-100">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Pig ID</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">D.O.B</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">D.O.W</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Weight</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Sex</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Breed</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">CSF Date</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Other Vaccination</th>
+                                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                    {item.piglets.map((piglet) => (
+                                        <tr key={piglet.id} className="hover:bg-gray-50">
+                                            <td className="px-3 py-2 text-sm text-gray-900">{piglet.pigId}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">{piglet.dob}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">{piglet.dow}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">{piglet.weight} kg</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900 capitalize">{piglet.sex}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">{piglet.breed}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">{piglet.csfDate || 'Not given'}</td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">
+                                                {piglet.otherVaccinationName ? `${piglet.otherVaccinationName} (${piglet.otherVaccination})` : 'Not given'}
+                                            </td>
+                                            <td className="px-3 py-2 text-sm text-gray-900">
+                                                <div className="flex space-x-2">
+                                                    <button
+                                                        onClick={() => handleEditPiglet(piglet, item)}
+                                                        className="text-green-600 hover:text-green-900 flex items-center text-xs"
+                                                        disabled={piglet.currentStage !== 'nursery'}
+                                                    >
+                                                        <Edit className="h-3 w-3 mr-1" />
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleMovePigletToFattening(piglet, item)}
+                                                        disabled={piglet.currentStage !== 'nursery' || (isMovingPig && movingPigId === piglet.id)}
+                                                        className={`text-xs px-2 py-1 rounded transition-colors duration-200 ${piglet.currentStage !== 'nursery'
+                                                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                                : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                                                            }`}
+                                                    >
+                                                        {isMovingPig && movingPigId === piglet.id ? (
+                                                            <>
+                                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600 mr-1 inline-block"></div>
+                                                                Moving...
+                                                            </>
+                                                        ) : (
+                                                            piglet.currentStage !== 'nursery' ? 'Moved' : 'Move to Fattening'
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </td>
             </tr>
         );
@@ -318,8 +371,8 @@ const NurseryStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                        ? 'border-green-500 text-green-600 bg-green-50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-green-500 text-green-600 bg-green-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -328,12 +381,12 @@ const NurseryStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                        ? 'border-green-500 text-green-600 bg-green-50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-green-500 text-green-600 bg-green-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
-                                    History ({mockHistoryRecords.length})
+                                    History ({filteredHistoryRecords.length})
                                 </button>
                             </nav>
                         </div>
@@ -361,11 +414,33 @@ const NurseryStage = () => {
 
                             {selectedFilter === 'history' && (
                                 <div>
+                                    {/* Month Selection for History */}
+                                    <div className="mb-4 flex items-center space-x-4">
+                                        <span className="text-sm font-medium text-gray-700">Filter by month:</span>
+                                        <select
+                                            value={selectedMonth}
+                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        >
+                                            {months.map((month, index) => (
+                                                <option key={index} value={index}>{month}</option>
+                                            ))}
+                                        </select>
+                                        <select
+                                            value={selectedYear}
+                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                                        >
+                                            {[2023, 2024, 2025].map(year => (
+                                                <option key={year} value={year}>{year}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Nursery History
                                     </h3>
                                     <AdvancedTable
-                                        data={mockHistoryRecords}
+                                        data={filteredHistoryRecords}
                                         columns={historyRecordsColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="sowId"
@@ -481,7 +556,7 @@ const NurseryStage = () => {
                                     Other Vaccination Name
                                 </label>
                                 <input
-                                    type="date"
+                                    type="text"
                                     value={editForm.otherVaccinationName}
                                     onChange={(e) => setEditForm({ ...editForm, otherVaccinationName: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -495,8 +570,8 @@ const NurseryStage = () => {
                                 </label>
                                 <input
                                     type="date"
-                                    value={editForm.otherVaccinationDate}
-                                    onChange={(e) => setEditForm({ ...editForm, otherVaccinationDate: e.target.value })}
+                                    value={editForm.otherVaccination}
+                                    onChange={(e) => setEditForm({ ...editForm, otherVaccination: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                 />
                             </div>
@@ -524,4 +599,3 @@ const NurseryStage = () => {
 };
 
 export default NurseryStage;
-//*

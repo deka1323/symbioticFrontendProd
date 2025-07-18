@@ -11,7 +11,7 @@ const LoginPage = () => {
   const { login, error } = useAuth();
   const navigate = useNavigate(); // Initialize useNavigate
 
-  console.log("error -> ", error)
+  // console.log("error -> ", error)
 
   // const handleSubmit = async (e) => {
   //   e.preventDefault();

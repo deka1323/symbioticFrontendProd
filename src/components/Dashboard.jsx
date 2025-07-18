@@ -152,6 +152,30 @@ const Dashboard = () => {
                 {/* Current Stage Management */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Current Stage</h3>
+
+                  {/* Stage History */}
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-4">
+                    <h4 className="font-medium text-blue-800 mb-3">Stage History</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-700">Breeding Stage:</span>
+                        <span className="text-blue-600">2023-03-15 to 2023-08-15 (153 days)</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-700">Gestation Stage:</span>
+                        <span className="text-blue-600">2023-08-15 to 2023-12-07 (114 days)</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-700">Farrowing Stage:</span>
+                        <span className="text-blue-600">2023-12-07 to 2024-01-15 (39 days)</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-blue-700 font-medium">Current - Breeding Stage:</span>
+                        <span className="text-blue-600 font-medium">2024-01-15 to Present</span>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-4">
                       <span className="font-medium text-gray-600">Current Stage:</span>

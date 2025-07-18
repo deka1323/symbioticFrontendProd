@@ -36,14 +36,14 @@ const Navigation = () => {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <Pig className="h-8 w-8 text-emerald-600" />
-              <span className="ml-2 text-lg font-bold text-gray-900 hidden sm:block">FarmTracker Pro</span>
-              <span className="ml-2 text-base font-bold text-gray-900 sm:hidden">FTP</span>
+              <span className="ml-2 text-base sm:text-lg font-bold text-gray-900 hidden xs:block">FarmTracker Pro</span>
+              <span className="ml-2 text-sm font-bold text-gray-900 xs:hidden">FTP</span>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden xl:flex items-center space-x-1">
             {/* Navigation Items */}
-            <div className="flex space-x-1">
+            <div className="flex space-x-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.id;
@@ -51,12 +51,12 @@ const Navigation = () => {
                   <button
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
-                    className={`inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isActive
+                    className={`inline-flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isActive
                         ? 'bg-emerald-100 text-emerald-700 shadow-sm'
                         : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
-                    <Icon className="h-4 w-4 mr-2" />
+                    <Icon className="h-3 w-3 mr-1" />
                     {item.label}
                   </button>
                 );
@@ -64,11 +64,11 @@ const Navigation = () => {
             </div>
 
             {/* User Menu */}
-            <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
-              <div className="hidden xl:flex items-center space-x-2">
+            <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-gray-200">
+              <div className="hidden 2xl:flex items-center space-x-1">
                 <div className="flex items-center space-x-1">
                   <User className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-700 max-w-32 truncate">
+                  <span className="text-xs text-gray-700 max-w-20 truncate">
                     {user?.signInDetails?.loginId || 'User'}
                   </span>
                 </div>
@@ -76,16 +76,16 @@ const Navigation = () => {
 
               <button
                 onClick={handleLogout}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
+                className="inline-flex items-center px-2 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200 shadow-sm hover:shadow-md whitespace-nowrap"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="h-3 w-3 mr-1" />
                 <span>Logout</span>
               </button>
             </div>
           </div>
 
           {/* Mobile Navigation Button */}
-          <div className="lg:hidden flex items-center space-x-2">
+          <div className="xl:hidden flex items-center space-x-2">
             <div className="flex items-center space-x-1">
               <User className="h-4 w-4 text-gray-500" />
               <span className="text-sm text-gray-700 max-w-20 truncate">
@@ -107,7 +107,7 @@ const Navigation = () => {
 
         {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 bg-white">
+          <div className="xl:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
