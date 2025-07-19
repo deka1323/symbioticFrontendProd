@@ -1,22 +1,26 @@
-# Pig Farm Management System - Complete Database Architecture & Query Documentation
+# Single-Table DynamoDB Architecture for Pig Farm Management System
 
 ## Overview
 
-This document provides comprehensive database architecture and detailed query specifications for the Pig Farm Management System using AWS DynamoDB with supporting services.
+This document provides a comprehensive single-table DynamoDB design that consolidates all pig farm management data into one optimized table while maintaining full functionality and query performance.
 
-## Database Design Philosophy
+## Design Philosophy
 
-- **Single Table Design**: Leveraging DynamoDB's strengths with composite keys
-- **Access Patterns First**: Designed around query requirements
+- **Single Table Design**: All entities in one table using composite keys
+- **Access Pattern Driven**: Designed around specific query requirements
+- **Hierarchical Data**: Using sort key patterns for relationships
+- **Cost Optimization**: Minimal table count reduces overhead
 - **Scalability**: Optimized for 1000+ pigs with room for growth
-- **Cost Efficiency**: Minimized read/write operations
 
-## Core Tables Structure
+## Single Table Structure
 
-### 1. Pigs Table (Primary Entity Table)
+### Table Name: `PigFarm-Data`
 
-**Table Name**: `PigFarm-Pigs`
 **Primary Key**: `PK` (Partition Key), `SK` (Sort Key)
+
+## Entity Patterns & Access Patterns
+
+### 1. Pig Profile Records
 
 ```
 PK: PIG#{pigId}
@@ -44,14 +48,11 @@ Attributes:
 - GSI2SK (String) - CREATED#{createdAt}
 ```
 
-### 2. Medical Records Table
-
-**Table Name**: `PigFarm-MedicalRecords`
-**Primary Key**: `PK`, `SK`
+### 2. Medical Records
 
 ```
 PK: PIG#{pigId}
-SK: MEDICAL#{recordType}#{date}#{id}
+SK: MEDICAL#{recordType}#{date}#{sequenceId}
 
 Attributes:
 - pigId (String)
@@ -67,10 +68,30 @@ Attributes:
 - GSI1SK (String) - DUE#{nextDueDate}#{pigId}
 ```
 
-### 3. Breeding Records Table
+### 3. Stage Records (All Stages)
 
-**Table Name**: `PigFarm-BreedingRecords`
-**Primary Key**: `PK`, `SK`
+```
+PK: PIG#{pigId}
+SK: STAGE#{stageNumber}#{stageName}#{recordId}
+
+Attributes:
+- pigId (String)
+- stageName (String) - "breeding" | "gestation" | "farrowing" | "nursery" | "fattening"
+- stageNumber (Number) - Sequential stage number (1, 2, 3...)
+- recordId (String) - Unique record ID for this stage
+- inDate (String) - Entry date to stage
+- outDate (String) - Exit date from stage
+- status (String) - "active" | "completed"
+- stageSpecificData (Map) - Stage-specific attributes
+- createdAt (String)
+- updatedAt (String)
+- GSI1PK (String) - STAGE#{stageName}#{status}
+- GSI1SK (String) - DATE#{inDate}#{pigId}
+- GSI2PK (String) - STAGE#{stageName}
+- GSI2SK (String) - STATUS#{status}#{inDate}
+```
+
+### 4. Breeding Records
 
 ```
 PK: BREEDING#{breedingId}
@@ -80,7 +101,7 @@ Attributes:
 - breedingId (String) - Unique breeding record ID
 - sowId (String) - Female pig ID
 - boarId (String) - Male pig ID
-- matingDate (String) - ISO date (also inDate)
+- matingDate (String) - ISO date
 - inDate (String) - Entry date to breeding stage
 - outDate (String) - Exit date from breeding stage
 - sowBreed (String)
@@ -98,98 +119,29 @@ Attributes:
 - GSI2SK (String) - DATE#{matingDate}
 ```
 
-### 4. Gestation Records Table
-
-**Table Name**: `PigFarm-GestationRecords`
-**Primary Key**: `PK`, `SK`
+### 5. Litter Records (Nursery)
 
 ```
-PK: GESTATION#{gestationId}
-SK: RECORD
-
-Attributes:
-- gestationId (String) - Unique gestation record ID
-- pigId (String) - Sow ID
-- breedingRecordId (String) - Reference to breeding record
-- inDate (String) - Entry date to gestation
-- outDate (String) - Exit date from gestation
-- expectedExitDate (String) - inDate + 114 days
-- daysInStage (Number) - Current days in gestation
-- breed (String)
-- weight (Number) - Current weight
-- status (String) - "active" | "completed"
-- notes (String)
-- createdAt (String)
-- updatedAt (String)
-- GSI1PK (String) - STATUS#{status}
-- GSI1SK (String) - PIG#{pigId}
-- GSI2PK (String) - EXPECTED#{expectedExitDate}
-- GSI2SK (String) - PIG#{pigId}
-```
-
-### 5. Farrowing Records Table
-
-**Table Name**: `PigFarm-FarrowingRecords`
-**Primary Key**: `PK`, `SK`
-
-```
-PK: FARROWING#{farrowingId}
-SK: RECORD
-
-Attributes:
-- farrowingId (String) - Unique farrowing record ID
-- pigId (String) - Sow ID
-- gestationRecordId (String) - Reference to gestation record
-- inDate (String) - Entry date to farrowing
-- outDate (String) - Exit date from farrowing
-- farrowingDate (String) - Actual delivery date
-- stillBorn (Number) - Number of stillborn piglets
-- mummyBorn (Number) - Number of mummy piglets
-- liveBorn (Number) - Number of live piglets
-- atw (Number) - All Total Weight (stillBorn + mummyBorn + liveBorn)
-- weaningDate (String) - Date of weaning
-- weaningCount (Number) - Number weaned
-- breed (String)
-- status (String) - "active" | "completed"
-- remarks (String) - Additional notes
-- createdAt (String)
-- updatedAt (String)
-- GSI1PK (String) - STATUS#{status}
-- GSI1SK (String) - FARROWING#{farrowingDate}
-- GSI2PK (String) - SOW#{pigId}
-- GSI2SK (String) - DATE#{farrowingDate}
-```
-
-### 6. Nursery Records Table
-
-**Table Name**: `PigFarm-NurseryRecords`
-**Primary Key**: `PK`, `SK`
-
-```
-PK: NURSERY#{litterId}
-SK: RECORD
+PK: LITTER#{litterId}
+SK: METADATA
 
 Attributes:
 - litterId (String) - Unique litter ID
 - sowId (String) - Mother pig ID
 - boarId (String) - Father pig ID
-- farrowingRecordId (String) - Reference to farrowing record
-- inDate (String) - Entry date to nursery
-- outDate (String) - Exit date from nursery
 - farrowingDate (String) - Birth date of piglets
 - weaningDate (String) - Weaning date
 - totalPiglets (Number) - Total piglets in litter
+- inDate (String) - Entry to nursery
+- outDate (String) - Exit from nursery
 - status (String) - "active" | "completed"
 - createdAt (String)
 - updatedAt (String)
-- GSI1PK (String) - STATUS#{status}
+- GSI1PK (String) - NURSERY#{status}
 - GSI1SK (String) - LITTER#{litterId}
 ```
 
-### 7. Piglet Records Table (Sub-records of Nursery)
-
-**Table Name**: `PigFarm-PigletRecords`
-**Primary Key**: `PK`, `SK`
+### 6. Piglet Records (Individual piglets in litter)
 
 ```
 PK: LITTER#{litterId}
@@ -217,39 +169,7 @@ Attributes:
 - GSI1SK (String) - STAGE#{currentStage}
 ```
 
-### 8. Fattening Records Table
-
-**Table Name**: `PigFarm-FatteningRecords`
-**Primary Key**: `PK`, `SK`
-
-```
-PK: FATTENING#{fatteningId}
-SK: RECORD
-
-Attributes:
-- fatteningId (String) - Unique fattening record ID
-- pigId (String) - Pig ID
-- fatherPigId (String) - Father pig ID
-- motherPigId (String) - Mother pig ID
-- breed (String) - Breed
-- sex (String) - "male" | "female"
-- weight (Number) - Current weight
-- inDate (String) - Entry date to fattening
-- outDate (String) - Exit date from fattening
-- status (String) - "active" | "completed"
-- outcome (String) - "sold" | "inhouse"
-- createdAt (String)
-- updatedAt (String)
-- GSI1PK (String) - STATUS#{status}
-- GSI1SK (String) - PIG#{pigId}
-- GSI2PK (String) - WEIGHT#{weight}
-- GSI2SK (String) - PIG#{pigId}
-```
-
-### 9. Sales Records Table
-
-**Table Name**: `PigFarm-SalesRecords`
-**Primary Key**: `PK`, `SK`
+### 7. Sales Records
 
 ```
 PK: SALE#{saleId}
@@ -274,53 +194,38 @@ Attributes:
 - GSI2SK (String) - DATE#{saleDate}
 ```
 
-### 10. Stage History Table
-
-**Table Name**: `PigFarm-StageHistory`
-**Primary Key**: `PK`, `SK`
+### 8. Lookup Records (For quick counts and statistics)
 
 ```
-PK: PIG#{pigId}
-SK: STAGE#{stageNumber}#{stage}
+PK: LOOKUP#{entityType}
+SK: COUNT#{date}
 
 Attributes:
-- pigId (String)
-- stage (String) - Stage name
-- stageNumber (Number) - Sequential stage number
-- inDate (String) - Entry date to stage
-- outDate (String) - Exit date from stage
-- daysInStage (Number) - Total days in stage
-- stageSpecificData (Map) - Stage-specific information
-- createdAt (String)
-- GSI1PK (String) - STAGE#{stage}
-- GSI1SK (String) - DATE#{inDate}#{pigId}
+- entityType (String) - "TOTAL_PIGS" | "LIVING_PIGS" | "DEAD_PIGS" | "STAGE_COUNTS"
+- date (String) - Date of count
+- counts (Map) - Count data by category
+- lastUpdated (String)
+- GSI1PK (String) - LOOKUP#{entityType}
+- GSI1SK (String) - DATE#{date}
 ```
 
-## Global Secondary Indexes (GSI)
+## Global Secondary Indexes
 
-### GSI1: Status-Stage Index
+### GSI1: Entity-Status-Date Index
 
-**Index Name**: `StatusStageIndex`
+**Index Name**: `EntityStatusDateIndex`
 
 - **PK**: GSI1PK
 - **SK**: GSI1SK
-- **Purpose**: Query by status and stage combinations
+- **Purpose**: Query by entity type, status, and date ranges
 
-### GSI2: Stage-Date Index
+### GSI2: Stage-Status Index
 
-**Index Name**: `StageDateIndex`
+**Index Name**: `StageStatusIndex`
 
 - **PK**: GSI2PK
 - **SK**: GSI2SK
-- **Purpose**: Query by stage and date ranges
-
-### GSI3: Weight-Based Index
-
-**Index Name**: `WeightIndex`
-
-- **PK**: GSI2PK (for fattening records)
-- **SK**: GSI2SK
-- **Purpose**: Query by weight ranges in fattening stage
+- **Purpose**: Query by stage and status combinations
 
 ## Complete Query Documentation by Page
 
@@ -331,7 +236,7 @@ Attributes:
 ```javascript
 // Query: Get pig profile
 const params = {
-  TableName: "PigFarm-Pigs",
+  TableName: "PigFarm-Data",
   Key: {
     PK: `PIG#${pigId}`,
     SK: "PROFILE",
@@ -340,17 +245,18 @@ const params = {
 
 // Query: Get pig stage history
 const historyParams = {
-  TableName: "PigFarm-StageHistory",
-  KeyConditionExpression: "PK = :pk",
+  TableName: "PigFarm-Data",
+  KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
   ExpressionAttributeValues: {
     ":pk": `PIG#${pigId}`,
+    ":sk": "STAGE#",
   },
   ScanIndexForward: true,
 };
 
 // Query: Get pig medical records
 const medicalParams = {
-  TableName: "PigFarm-MedicalRecords",
+  TableName: "PigFarm-Data",
   KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
   ExpressionAttributeValues: {
     ":pk": `PIG#${pigId}`,
@@ -366,10 +272,11 @@ const medicalParams = {
 ```javascript
 // Query: Get all active breeding records
 const params = {
-  TableName: "PigFarm-BreedingRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI2PK = :status",
+  TableName: "PigFarm-Data",
+  IndexName: "StageStatusIndex",
+  KeyConditionExpression: "GSI2PK = :stage AND begins_with(GSI2SK, :status)",
   ExpressionAttributeValues: {
+    ":stage": "STAGE#breeding",
     ":status": "STATUS#active",
   },
 };
@@ -380,12 +287,13 @@ const params = {
 ```javascript
 // Query: Get completed breeding records for specific month
 const params = {
-  TableName: "PigFarm-BreedingRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI2PK = :status AND begins_with(GSI2SK, :month)",
+  TableName: "PigFarm-Data",
+  IndexName: "StageStatusIndex",
+  KeyConditionExpression:
+    "GSI2PK = :stage AND begins_with(GSI2SK, :statusMonth)",
   ExpressionAttributeValues: {
-    ":status": "STATUS#completed",
-    ":month": `DATE#${year}-${month.padStart(2, "0")}`,
+    ":stage": "STAGE#breeding",
+    ":statusMonth": `STATUS#completed#${year}-${month.padStart(2, "0")}`,
   },
 };
 ```
@@ -393,67 +301,119 @@ const params = {
 #### Add New Breeding Record
 
 ```javascript
-// Mutation: Create new breeding record
-const params = {
-  TableName: "PigFarm-BreedingRecords",
-  Item: {
-    PK: `BREEDING#${breedingId}`,
-    SK: "RECORD",
-    breedingId,
-    sowId,
-    boarId,
-    matingDate: today,
-    inDate: today,
-    outDate: null,
-    status: "active",
-    // ... other attributes
-    GSI1PK: `SOW#${sowId}`,
-    GSI1SK: `BREEDING#${today}`,
-    GSI2PK: "STATUS#active",
-    GSI2SK: `DATE#${today}`,
-  },
+// Transaction: Create breeding record and update pig stage
+const transactParams = {
+  TransactItems: [
+    {
+      Put: {
+        TableName: "PigFarm-Data",
+        Item: {
+          PK: `BREEDING#${breedingId}`,
+          SK: "RECORD",
+          breedingId,
+          sowId,
+          boarId,
+          matingDate: today,
+          inDate: today,
+          status: "active",
+          // ... other attributes
+          GSI1PK: `SOW#${sowId}`,
+          GSI1SK: `BREEDING#${today}`,
+          GSI2PK: "STAGE#breeding",
+          GSI2SK: `STATUS#active#${today}`,
+        },
+      },
+    },
+    {
+      Put: {
+        TableName: "PigFarm-Data",
+        Item: {
+          PK: `PIG#${sowId}`,
+          SK: `STAGE#${stageNumber}#breeding#${breedingId}`,
+          pigId: sowId,
+          stageName: "breeding",
+          stageNumber,
+          recordId: breedingId,
+          inDate: today,
+          status: "active",
+          stageSpecificData: {
+            breedingRecordId: breedingId,
+            boarId,
+            matingDate: today,
+          },
+        },
+      },
+    },
+    {
+      Update: {
+        TableName: "PigFarm-Data",
+        Key: { PK: `PIG#${sowId}`, SK: "PROFILE" },
+        UpdateExpression: "SET currentStage = :stage",
+        ExpressionAttributeValues: { ":stage": "breeding" },
+      },
+    },
+  ],
 };
 ```
 
 #### Move to Gestation
 
 ```javascript
-// Transaction: Update breeding record and create gestation record
+// Transaction: Update breeding record, create gestation record, update pig
 const transactParams = {
   TransactItems: [
     {
       Update: {
-        TableName: "PigFarm-BreedingRecords",
+        TableName: "PigFarm-Data",
         Key: { PK: `BREEDING#${breedingId}`, SK: "RECORD" },
         UpdateExpression:
-          "SET outDate = :outDate, #status = :status, GSI2PK = :newStatus",
+          "SET outDate = :outDate, #status = :status, GSI2SK = :newStatusDate",
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: {
           ":outDate": today,
           ":status": "completed",
-          ":newStatus": "STATUS#completed",
+          ":newStatusDate": `STATUS#completed#${today}`,
+        },
+      },
+    },
+    {
+      Update: {
+        TableName: "PigFarm-Data",
+        Key: {
+          PK: `PIG#${sowId}`,
+          SK: `STAGE#${currentStageNumber}#breeding#${breedingId}`,
+        },
+        UpdateExpression: "SET outDate = :outDate, #status = :status",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+          ":outDate": today,
+          ":status": "completed",
         },
       },
     },
     {
       Put: {
-        TableName: "PigFarm-GestationRecords",
+        TableName: "PigFarm-Data",
         Item: {
-          PK: `GESTATION#${gestationId}`,
-          SK: "RECORD",
-          gestationId,
+          PK: `PIG#${sowId}`,
+          SK: `STAGE#${nextStageNumber}#gestation#${gestationId}`,
           pigId: sowId,
-          breedingRecordId: breedingId,
+          stageName: "gestation",
+          stageNumber: nextStageNumber,
+          recordId: gestationId,
           inDate: today,
-          expectedExitDate: expectedDate,
           status: "active",
-          // ... other attributes
+          stageSpecificData: {
+            breedingRecordId: breedingId,
+            expectedExitDate: expectedDate,
+            daysInStage: 0,
+          },
         },
       },
     },
     {
       Update: {
-        TableName: "PigFarm-Pigs",
+        TableName: "PigFarm-Data",
         Key: { PK: `PIG#${sowId}`, SK: "PROFILE" },
         UpdateExpression: "SET currentStage = :stage",
         ExpressionAttributeValues: { ":stage": "gestation" },
@@ -470,11 +430,15 @@ const transactParams = {
 ```javascript
 // Query: Get all active gestation records
 const params = {
-  TableName: "PigFarm-GestationRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI1PK = :status",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :stage",
+  FilterExpression: "stageName = :stageName AND #status = :status",
+  ExpressionAttributeNames: { "#status": "status" },
   ExpressionAttributeValues: {
-    ":status": "STATUS#active",
+    ":stage": "STAGE#gestation#active",
+    ":stageName": "gestation",
+    ":status": "active",
   },
 };
 ```
@@ -484,12 +448,16 @@ const params = {
 ```javascript
 // Query: Get completed gestation records for specific month
 const params = {
-  TableName: "PigFarm-GestationRecords",
-  FilterExpression: "#status = :status AND begins_with(outDate, :month)",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :stage AND begins_with(GSI1SK, :month)",
+  FilterExpression: "stageName = :stageName AND #status = :status",
   ExpressionAttributeNames: { "#status": "status" },
   ExpressionAttributeValues: {
+    ":stage": "STAGE#gestation#completed",
+    ":month": `DATE#${year}-${month.padStart(2, "0")}`,
+    ":stageName": "gestation",
     ":status": "completed",
-    ":month": `${year}-${month.padStart(2, "0")}`,
   },
 };
 ```
@@ -501,11 +469,15 @@ const params = {
 ```javascript
 // Query: Get all active farrowing records
 const params = {
-  TableName: "PigFarm-FarrowingRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI1PK = :status",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :stage",
+  FilterExpression: "stageName = :stageName AND #status = :status",
+  ExpressionAttributeNames: { "#status": "status" },
   ExpressionAttributeValues: {
-    ":status": "STATUS#active",
+    ":stage": "STAGE#farrowing#active",
+    ":stageName": "farrowing",
+    ":status": "active",
   },
 };
 ```
@@ -513,12 +485,12 @@ const params = {
 #### Update Farrowing Details
 
 ```javascript
-// Mutation: Update farrowing record details
+// Mutation: Update farrowing stage record
 const params = {
-  TableName: "PigFarm-FarrowingRecords",
-  Key: { PK: `FARROWING#${farrowingId}`, SK: "RECORD" },
+  TableName: "PigFarm-Data",
+  Key: { PK: `PIG#${pigId}`, SK: `STAGE#${stageNumber}#farrowing#${recordId}` },
   UpdateExpression:
-    "SET farrowingDate = :fDate, stillBorn = :still, mummyBorn = :mummy, liveBorn = :live, atw = :atw, remarks = :remarks",
+    "SET stageSpecificData.farrowingDate = :fDate, stageSpecificData.stillBorn = :still, stageSpecificData.mummyBorn = :mummy, stageSpecificData.liveBorn = :live, stageSpecificData.atw = :atw, stageSpecificData.remarks = :remarks",
   ExpressionAttributeValues: {
     ":fDate": farrowingDate,
     ":still": stillBorn,
@@ -535,22 +507,23 @@ const params = {
 #### Get Current Nursery Records with Piglets
 
 ```javascript
-// Query: Get all active nursery records
-const nurseryParams = {
-  TableName: "PigFarm-NurseryRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI1PK = :status",
+// Query: Get all active litters
+const litterParams = {
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :nursery",
   ExpressionAttributeValues: {
-    ":status": "STATUS#active",
+    ":nursery": "NURSERY#active",
   },
 };
 
 // Query: Get piglets for each litter
 const pigletParams = {
-  TableName: "PigFarm-PigletRecords",
-  KeyConditionExpression: "PK = :pk",
+  TableName: "PigFarm-Data",
+  KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
   ExpressionAttributeValues: {
     ":pk": `LITTER#${litterId}`,
+    ":sk": "PIGLET#",
   },
 };
 ```
@@ -560,7 +533,7 @@ const pigletParams = {
 ```javascript
 // Mutation: Update individual piglet
 const params = {
-  TableName: "PigFarm-PigletRecords",
+  TableName: "PigFarm-Data",
   Key: { PK: `LITTER#${litterId}`, SK: `PIGLET#${pigletId}` },
   UpdateExpression:
     "SET pigId = :pigId, weight = :weight, sex = :sex, breed = :breed, csfDate = :csf, otherVaccination = :otherVacc, otherVaccinationName = :otherVaccName",
@@ -584,7 +557,7 @@ const transactParams = {
   TransactItems: [
     {
       Update: {
-        TableName: "PigFarm-PigletRecords",
+        TableName: "PigFarm-Data",
         Key: { PK: `LITTER#${litterId}`, SK: `PIGLET#${pigletId}` },
         UpdateExpression:
           "SET outDate = :outDate, currentStage = :stage, #status = :status",
@@ -598,20 +571,47 @@ const transactParams = {
     },
     {
       Put: {
-        TableName: "PigFarm-FatteningRecords",
+        TableName: "PigFarm-Data",
         Item: {
-          PK: `FATTENING#${fatteningId}`,
-          SK: "RECORD",
-          fatteningId,
+          PK: `PIG#${pigletId}`,
+          SK: `STAGE#${stageNumber}#fattening#${fatteningId}`,
           pigId: pigletId,
-          fatherPigId: boarId,
-          motherPigId: sowId,
-          breed,
-          sex,
-          weight,
+          stageName: "fattening",
+          stageNumber,
+          recordId: fatteningId,
           inDate: today,
           status: "active",
-          // ... other attributes
+          stageSpecificData: {
+            fatherPigId: boarId,
+            motherPigId: sowId,
+            breed,
+            sex,
+            weight,
+          },
+        },
+      },
+    },
+    {
+      Put: {
+        TableName: "PigFarm-Data",
+        Item: {
+          PK: `PIG#${pigletId}`,
+          SK: "PROFILE",
+          pigId: pigletId,
+          sex,
+          breed,
+          motherPigId: sowId,
+          fatherPigId: boarId,
+          weight,
+          dateOfBirth: dob,
+          currentStatus: "living",
+          currentStage: "fattening",
+          origin: "in-house",
+          createdAt: now,
+          GSI1PK: "STATUS#living",
+          GSI1SK: "STAGE#fattening#" + pigletId,
+          GSI2PK: "STAGE#fattening",
+          GSI2SK: "CREATED#" + now,
         },
       },
     },
@@ -626,11 +626,15 @@ const transactParams = {
 ```javascript
 // Query: Get all active fattening records
 const params = {
-  TableName: "PigFarm-FatteningRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI1PK = :status",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :stage",
+  FilterExpression: "stageName = :stageName AND #status = :status",
+  ExpressionAttributeNames: { "#status": "status" },
   ExpressionAttributeValues: {
-    ":status": "STATUS#active",
+    ":stage": "STAGE#fattening#active",
+    ":stageName": "fattening",
+    ":status": "active",
   },
 };
 ```
@@ -640,12 +644,16 @@ const params = {
 ```javascript
 // Query: Get fattening records within weight range
 const params = {
-  TableName: "PigFarm-FatteningRecords",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI1PK = :status",
-  FilterExpression: "weight BETWEEN :minWeight AND :maxWeight",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :stage",
+  FilterExpression:
+    "stageName = :stageName AND #status = :status AND stageSpecificData.weight BETWEEN :minWeight AND :maxWeight",
+  ExpressionAttributeNames: { "#status": "status" },
   ExpressionAttributeValues: {
-    ":status": "STATUS#active",
+    ":stage": "STAGE#fattening#active",
+    ":stageName": "fattening",
+    ":status": "active",
     ":minWeight": minWeight,
     ":maxWeight": maxWeight,
   },
@@ -660,21 +668,41 @@ const transactParams = {
   TransactItems: [
     {
       Update: {
-        TableName: "PigFarm-FatteningRecords",
-        Key: { PK: `FATTENING#${fatteningId}`, SK: "RECORD" },
-        UpdateExpression:
-          "SET outDate = :outDate, #status = :status, outcome = :outcome",
+        TableName: "PigFarm-Data",
+        Key: {
+          PK: `PIG#${pigId}`,
+          SK: `STAGE#${stageNumber}#fattening#${recordId}`,
+        },
+        UpdateExpression: "SET outDate = :outDate, #status = :status",
         ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: {
           ":outDate": today,
           ":status": "completed",
-          ":outcome": "inhouse",
+        },
+      },
+    },
+    {
+      Put: {
+        TableName: "PigFarm-Data",
+        Item: {
+          PK: `PIG#${pigId}`,
+          SK: `STAGE#${nextStageNumber}#inhouse#${inhouseId}`,
+          pigId,
+          stageName: "inhouse",
+          stageNumber: nextStageNumber,
+          recordId: inhouseId,
+          inDate: today,
+          status: "active",
+          stageSpecificData: {
+            previousStage: "fattening",
+            inhouseDate: today,
+          },
         },
       },
     },
     {
       Update: {
-        TableName: "PigFarm-Pigs",
+        TableName: "PigFarm-Data",
         Key: { PK: `PIG#${pigId}`, SK: "PROFILE" },
         UpdateExpression: "SET currentStage = :stage",
         ExpressionAttributeValues: { ":stage": "inhouse" },
@@ -693,7 +721,7 @@ const transactParams = {
 const transactItems = [
   {
     Put: {
-      TableName: "PigFarm-SalesRecords",
+      TableName: "PigFarm-Data",
       Item: {
         PK: `SALE#${saleId}`,
         SK: "RECORD",
@@ -718,16 +746,39 @@ const transactItems = [
   },
 ];
 
-// Add pig status updates
-pigIds.forEach((pigId) => {
+// Add pig status updates and stage records
+pigIds.forEach((pigId, index) => {
+  const stageNumber = index + 1; // This would be calculated based on pig's history
+
   transactItems.push({
     Update: {
-      TableName: "PigFarm-Pigs",
+      TableName: "PigFarm-Data",
       Key: { PK: `PIG#${pigId}`, SK: "PROFILE" },
       UpdateExpression: "SET currentStage = :stage, soldDate = :soldDate",
       ExpressionAttributeValues: {
         ":stage": "sold",
         ":soldDate": today,
+      },
+    },
+  });
+
+  transactItems.push({
+    Put: {
+      TableName: "PigFarm-Data",
+      Item: {
+        PK: `PIG#${pigId}`,
+        SK: `STAGE#${stageNumber}#sold#${saleId}`,
+        pigId,
+        stageName: "sold",
+        stageNumber,
+        recordId: saleId,
+        inDate: today,
+        status: "active",
+        stageSpecificData: {
+          saleId,
+          buyerName,
+          saleDate: today,
+        },
       },
     },
   });
@@ -743,8 +794,8 @@ const transactParams = { TransactItems: transactItems };
 ```javascript
 // Query: Get vaccinations due in specific month
 const params = {
-  TableName: "PigFarm-MedicalRecords",
-  IndexName: "VaccinationDueIndex",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
   KeyConditionExpression: "GSI1PK = :vaccine AND begins_with(GSI1SK, :month)",
   ExpressionAttributeValues: {
     ":vaccine": `VACCINE#${vaccineType}`,
@@ -758,12 +809,16 @@ const params = {
 ```javascript
 // Query: Get expected deliveries for specific month
 const params = {
-  TableName: "PigFarm-GestationRecords",
-  IndexName: "ExpectedDateIndex",
-  KeyConditionExpression: "GSI2PK = :expected AND begins_with(GSI2SK, :month)",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :gestation AND begins_with(GSI1SK, :month)",
+  FilterExpression: "stageName = :stageName AND #status = :status",
+  ExpressionAttributeNames: { "#status": "status" },
   ExpressionAttributeValues: {
-    ":expected": `EXPECTED#${year}-${month.padStart(2, "0")}`,
-    ":month": "PIG#",
+    ":gestation": "STAGE#gestation#active",
+    ":month": `DATE#${year}-${month.padStart(2, "0")}`,
+    ":stageName": "gestation",
+    ":status": "active",
   },
 };
 ```
@@ -773,8 +828,8 @@ const params = {
 ```javascript
 // Query: Get pigs by current stage
 const params = {
-  TableName: "PigFarm-Pigs",
-  IndexName: "StatusStageIndex",
+  TableName: "PigFarm-Data",
+  IndexName: "StageStatusIndex",
   KeyConditionExpression: "GSI2PK = :stage",
   ExpressionAttributeValues: {
     ":stage": `STAGE#${stageName}`,
@@ -787,8 +842,8 @@ const params = {
 ```javascript
 // Query: Get sales for specific month
 const params = {
-  TableName: "PigFarm-SalesRecords",
-  IndexName: "SalesDateIndex",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
   KeyConditionExpression: "GSI1PK = :date",
   ExpressionAttributeValues: {
     ":date": `DATE#${year}-${month.padStart(2, "0")}`,
@@ -801,13 +856,14 @@ const params = {
 ```javascript
 // Query: Get in-house pigs for specific month
 const params = {
-  TableName: "PigFarm-Pigs",
-  IndexName: "StatusStageIndex",
-  KeyConditionExpression: "GSI2PK = :stage",
-  FilterExpression: "begins_with(createdAt, :month)",
+  TableName: "PigFarm-Data",
+  IndexName: "EntityStatusDateIndex",
+  KeyConditionExpression: "GSI1PK = :stage AND begins_with(GSI1SK, :month)",
+  FilterExpression: "stageName = :stageName",
   ExpressionAttributeValues: {
-    ":stage": "STAGE#inhouse",
-    ":month": `${year}-${month.padStart(2, "0")}`,
+    ":stage": "STAGE#inhouse#active",
+    ":month": `DATE#${year}-${month.padStart(2, "0")}`,
+    ":stageName": "inhouse",
   },
 };
 ```
@@ -816,53 +872,81 @@ const params = {
 
 ### 1. Read Optimization
 
-- Use eventually consistent reads for non-critical data
-- Implement caching layer with ElastiCache for frequently accessed data
-- Batch operations for bulk queries
-- Use parallel queries for independent data fetching
+- **Hot Partition Management**: Distribute reads across multiple partitions
+- **Eventually Consistent Reads**: Use for non-critical real-time data
+- **Batch Operations**: Group related queries together
+- **Caching Layer**: Implement ElastiCache for frequently accessed data
 
 ### 2. Write Optimization
 
-- Use batch writes for related records
-- Implement write sharding for high-volume operations
-- Use DynamoDB Streams for real-time processing
-- Transaction batching for related updates
+- **Transaction Batching**: Group related writes in transactions
+- **Write Sharding**: Use random suffixes for high-volume writes
+- **Conditional Writes**: Prevent overwrites with conditions
+- **DynamoDB Streams**: Use for real-time processing and triggers
 
 ### 3. Cost Optimization
 
-- Use on-demand billing for variable workloads
-- Implement TTL for temporary records
-- Archive old records to S3 for long-term storage
-- Monitor and optimize GSI usage
+- **On-Demand vs Provisioned**: Choose based on traffic patterns
+- **TTL Implementation**: Auto-delete old records
+- **Data Archiving**: Move historical data to S3
+- **GSI Optimization**: Only create necessary indexes
 
 ## Capacity Planning & Cost Estimates
 
 ### Storage Requirements (1000 Pigs)
 
-- Pigs Table: ~1MB (1KB per pig)
-- Medical Records: ~10MB (100 records per pig, 100 bytes each)
-- Breeding Records: ~500KB (500 breeding events, 1KB each)
-- Gestation Records: ~300KB (300 gestation records, 1KB each)
-- Farrowing Records: ~200KB (200 farrowing events, 1KB each)
-- Nursery Records: ~1MB (200 litters with piglet details)
-- Fattening Records: ~500KB (500 fattening records, 1KB each)
-- Sales Records: ~200KB (200 sales transactions, 1KB each)
-- Stage History: ~2MB (20 stage transitions per pig, 100 bytes each)
+- **Pig Profiles**: ~1MB (1KB per pig)
+- **Medical Records**: ~10MB (100 records per pig, 100 bytes each)
+- **Stage Records**: ~5MB (50 stage transitions per pig, 100 bytes each)
+- **Breeding Records**: ~500KB (500 breeding events, 1KB each)
+- **Litter & Piglet Records**: ~2MB (200 litters with piglet details)
+- **Sales Records**: ~200KB (200 sales transactions, 1KB each)
+- **Lookup Records**: ~100KB (Statistics and counts)
 
-**Total Storage**: ~16MB
+**Total Storage**: ~18MB
 
 ### Monthly Operations (1000 Pigs)
 
-- **Read Operations**: 150,000 (daily monitoring, reports, searches)
-- **Write Operations**: 15,000 (updates, new records, stage transitions)
+- **Read Operations**: 100,000 (daily monitoring, reports, searches)
+- **Write Operations**: 10,000 (updates, new records, stage transitions)
 
 ### Monthly Cost Estimate (Mumbai Region)
 
-- **Storage**: $0.25 per GB = $0.004
-- **Read Operations**: $0.25 per million = $0.0375
-- **Write Operations**: $1.25 per million = $0.01875
-- **GSI Storage & Operations**: $0.03
+- **Storage**: $0.25 per GB = $0.0045 (~₹0.38)
+- **Read Operations**: $0.25 per million = $0.025 (~₹2.10)
+- **Write Operations**: $1.25 per million = $0.0125 (~₹1.05)
+- **GSI Storage & Operations**: $0.02 (~₹1.68)
 
-**Total Monthly DynamoDB Cost**: ~$0.09 USD (~₹7.5)
+**Total Monthly DynamoDB Cost**: ~$0.062 (~₹5.21)
 
-This architecture provides a comprehensive, scalable, and cost-effective solution for managing a pig farm with detailed query specifications for every feature across all pages of the application.
+## Advantages of Single-Table Design
+
+### 1. Performance Benefits
+
+- **Fewer Network Calls**: Related data in same table
+- **Atomic Transactions**: All related updates in single transaction
+- **Consistent Performance**: Predictable query patterns
+- **Reduced Latency**: Single table lookups
+
+### 2. Cost Benefits
+
+- **Lower Base Costs**: Single table overhead
+- **Reduced GSI Costs**: Fewer indexes needed
+- **Simplified Billing**: Single table to monitor
+- **Better Resource Utilization**: Shared capacity
+
+### 3. Operational Benefits
+
+- **Simplified Management**: One table to maintain
+- **Easier Monitoring**: Single table metrics
+- **Consistent Backup**: Single backup strategy
+- **Reduced Complexity**: Fewer moving parts
+
+### 4. Scalability Benefits
+
+- **Horizontal Scaling**: DynamoDB handles partitioning
+- **Flexible Schema**: Easy to add new entity types
+- **Query Optimization**: Access patterns drive design
+- **Future-Proof**: Easy to extend functionality
+
+This single-table architecture provides all the functionality of the multi-table design while offering better performance, lower costs, and simplified operations - making it the optimal choice for a pig farm management system.

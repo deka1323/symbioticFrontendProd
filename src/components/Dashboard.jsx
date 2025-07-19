@@ -1,66 +1,189 @@
-import React, { useState } from 'react';
-import { Search, Edit, Calendar, Syringe, Heart, Users } from 'lucide-react';
-import { createDefaultPig, PigStages } from '../types/pig';
+import React, { useEffect, useState } from 'react';
+import { Search, Edit, Calendar, Syringe, Heart, Users, Loader2, AlertCircle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { getPigDetailsByPigId, getPigMedicalHistoryByPigId, getPigStageHistoryByPigId } from '../actions/dashboardActions';
+
 
 const Dashboard = () => {
   const [searchId, setSearchId] = useState('');
   const [selectedPig, setSelectedPig] = useState(null);
+  const [medicalHistory, setMedicalHistory] = useState([]);
+  const [stageHistory, setStageHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Mock data for demonstration
-  const mockPig = {
-    pigId: 'PIG001',
-    sex: 'female',
-    breed: 'Yorkshire',
-    motherPigId: 'PIG090',
-    fatherPigId: 'BOAR05',
-    weight: 45.5,
-    dateOfBirth: '2023-03-15',
-    currentStatus: 'living',
-    currentStage: 'breeding',
-    vaccinationDates: [
-      { date: '2023-04-15', vaccineType: 'PRRS', nextDueDate: '2024-04-15' },
-      { date: '2023-05-15', vaccineType: 'FMD', nextDueDate: '2024-05-15' }
-    ],
-    dewormingDates: [
-      { date: '2023-06-01', medicineType: 'Ivermectin', dosage: '2ml' }
-    ],
-    otherMedicines: [
-      { date: '2023-07-10', medicineType: 'Antibiotic', dosage: '5ml' }
-    ],
-    pregnancyCount: 2,
-    matingPartners: [
-      { partnerId: 'BOAR03', matingDate: '2023-08-15', breed: 'Duroc' }
-    ],
-    pigletDetails: [
-      {
-        pregnancyNumber: 1,
-        farrowing_date: '2023-05-20',
-        totalBorn: 8,
-        live: 7,
-        dead: 1,
-        pigletIds: ['PIG101', 'PIG102', 'PIG103', 'PIG104', 'PIG105', 'PIG106', 'PIG107']
+
+
+  // const handleSearch = async () => {
+  //   if (!searchId.trim()) {
+  //     toast.error('Please enter a Pig ID');
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   setError(null);
+  //   setSelectedPig(null);
+  //   setMedicalHistory([]);
+  //   setStageHistory([]);
+
+  //   try {
+  //     // Fetch all three data sources simultaneously
+  //     const [pigDetailsResult, medicalResult, stageResult] = await Promise.allSettled([
+  //       getPigDetailsByPigId(searchId.trim()),
+  //       getPigMedicalHistoryByPigId(searchId.trim()),
+  //       getPigStageHistoryByPigId(searchId.trim())
+  //     ]);
+
+  //     // Handle pig details
+  //     if (pigDetailsResult.status === 'fulfilled' && pigDetailsResult.value?.success) {
+  //       setSelectedPig(pigDetailsResult.value.data);
+  //       toast.success(`Pig ${searchId} found successfully!`);
+  //     } else {
+  //       toast.error(`Pig ${searchId} not found`);
+  //       setError('Pig not found in database');
+  //       setLoading(false);
+  //       return;
+  //     }
+
+  //     // Handle medical history
+  //     if (medicalResult.status === 'fulfilled' && medicalResult.value) {
+  //       setMedicalHistory(Array.isArray(medicalResult.value) ? medicalResult.value : []);
+  //     } else {
+  //       console.warn('Medical history not available for pig:', searchId);
+  //       setMedicalHistory([]);
+  //     }
+
+  //     // Handle stage history
+  //     if (stageResult.status === 'fulfilled' && stageResult.value) {
+  //       setStageHistory(Array.isArray(stageResult.value) ? stageResult.value : []);
+  //     } else {
+  //       console.warn('Stage history not available for pig:', searchId);
+  //       setStageHistory([]);
+  //     }
+
+  //   } catch (error) {
+  //     console.error('Dashboard search error:', error);
+  //     toast.error('An error occurred while fetching pig data');
+  //     setError('Failed to fetch pig data');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+  const handleSearch = async () => {
+    if (!searchId.trim()) {
+      toast.error('Please enter a Pig ID');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSelectedPig(null);
+    setMedicalHistory([]);
+    setStageHistory([]);
+
+    try {
+      // Call all APIs in parallel
+      const [pigDetailsResult, medicalResult, stageResult] = await Promise.allSettled([
+        getPigDetailsByPigId(searchId.trim()),
+        getPigMedicalHistoryByPigId(searchId.trim()),
+        getPigStageHistoryByPigId(searchId.trim()),
+      ]);
+
+      // Pig Details
+      if (
+        pigDetailsResult.status === 'fulfilled' &&
+        pigDetailsResult.value?.success
+      ) {
+        setSelectedPig(pigDetailsResult.value.data);
+        toast.success(`Pig ${searchId} found successfully!`);
+      } else {
+        toast.error(`Pig ${searchId} not found`);
+        setError('Pig not found in database');
+        setLoading(false);
+        return;
       }
-    ],
-    totalPigletsSummary: {
-      totalBorn: 8,
-      totalLive: 7,
-      totalDead: 1
+
+      // Medical History
+      if (
+        medicalResult.status === 'fulfilled' &&
+        medicalResult.value?.success &&
+        Array.isArray(medicalResult.value.data)
+      ) {
+        setMedicalHistory(medicalResult.value.data);
+      } else {
+        console.warn('No medical history available');
+        setMedicalHistory([]);
+      }
+
+      // Stage History
+      if (
+        stageResult.status === 'fulfilled' &&
+        stageResult.value?.success &&
+        Array.isArray(stageResult.value.data)
+      ) {
+        setStageHistory(stageResult.value.data);
+      } else {
+        console.warn('No stage history available');
+        setStageHistory([]);
+      }
+
+    } catch (error) {
+      console.error('Dashboard search error:', error);
+      toast.error('An error occurred while fetching pig data');
+      setError('Failed to fetch pig data');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSearch = () => {
-    if (searchId) {
-      setSelectedPig(mockPig);
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
-  const handleStageChange = (newStage) => {
-    if (selectedPig) {
-      setSelectedPig({
-        ...selectedPig,
-        currentStage: newStage
-      });
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch {
+      return dateString;
     }
+  };
+
+  const formatValue = (value) => {
+    if (value === null || value === undefined || value === '') return 'N/A';
+    return value;
+  };
+
+  const groupMedicalRecordsByType = (records) => {
+    const grouped = {
+      vaccinations: [],
+      deworming: [],
+      medicines: []
+    };
+
+    records.forEach(record => {
+      if (record.recordType === 'vaccination') {
+        grouped.vaccinations.push(record);
+      } else if (record.recordType === 'deworming') {
+        grouped.deworming.push(record);
+      } else {
+        grouped.medicines.push(record);
+      }
+    });
+
+    return grouped;
+  };
+
+  const calculateDaysInStage = (inDate, outDate) => {
+    if (!inDate) return 'N/A';
+    const startDate = new Date(inDate);
+    const endDate = outDate ? new Date(outDate) : new Date();
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   return (
@@ -81,25 +204,49 @@ const Dashboard = () => {
                   id="pigId"
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   placeholder="Enter Pig ID (e.g., PIG001)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
               <button
                 onClick={handleSearch}
-                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                disabled={loading}
+                className="bg-emerald-600 text-white px-6 py-2 rounded-lg hover:bg-emerald-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <Search className="h-4 w-4" />
-                <span>Search</span>
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Searching...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    <span>Search</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
 
+          {/* Error State */}
+          {error && !loading && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+                <p className="text-red-800">{error}</p>
+              </div>
+            </div>
+          )}
+
           {/* Pig Details Section */}
-          {selectedPig && (
+          {selectedPig && !loading && (
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 border border-gray-100">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Pig Details - {selectedPig.pigId}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Pig Details - {formatValue(selectedPig.pigId)}
+                </h2>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -109,41 +256,47 @@ const Dashboard = () => {
                   <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Sex:</span>
-                      <span className="text-gray-900 capitalize">{selectedPig.sex}</span>
+                      <span className="text-gray-900 capitalize">{formatValue(selectedPig.sex)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Breed:</span>
-                      <span className="text-gray-900">{selectedPig.breed}</span>
+                      <span className="text-gray-900">{formatValue(selectedPig.breed)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Date of Birth:</span>
-                      <span className="text-gray-900">{selectedPig.dateOfBirth}</span>
+                      <span className="text-gray-900">{formatDate(selectedPig.dateOfBirth)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Weight:</span>
-                      <span className="text-gray-900">{selectedPig.weight} kg</span>
+                      <span className="text-gray-900">
+                        {selectedPig.weight ? `${selectedPig.weight} kg` : 'N/A'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Mother ID:</span>
-                      <span className="text-gray-900">{selectedPig.motherPigId || 'N/A'}</span>
+                      <span className="text-gray-900">{formatValue(selectedPig.motherPigId)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Father ID:</span>
-                      <span className="text-gray-900">{selectedPig.fatherPigId || 'N/A'}</span>
+                      <span className="text-gray-900">{formatValue(selectedPig.fatherPigId)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="font-medium text-gray-600">Status:</span>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${selectedPig.currentStatus === 'living'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                         }`}>
-                        {selectedPig.currentStatus}
+                        {formatValue(selectedPig.currentStatus)}
                       </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-600">Origin:</span>
+                      <span className="text-gray-900 capitalize">{formatValue(selectedPig.origin)}</span>
                     </div>
                     {selectedPig.soldDate && (
                       <div className="flex justify-between">
                         <span className="font-medium text-gray-600">Sold Date:</span>
-                        <span className="text-gray-900">{selectedPig.soldDate}</span>
+                        <span className="text-gray-900">{formatDate(selectedPig.soldDate)}</span>
                       </div>
                     )}
                   </div>
@@ -153,175 +306,167 @@ const Dashboard = () => {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Current Stage</h3>
 
-                  {/* Stage History */}
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-4">
-                    <h4 className="font-medium text-blue-800 mb-3">Stage History</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-700">Breeding Stage:</span>
-                        <span className="text-blue-600">2023-03-15 to 2023-08-15 (153 days)</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-700">Gestation Stage:</span>
-                        <span className="text-blue-600">2023-08-15 to 2023-12-07 (114 days)</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-700">Farrowing Stage:</span>
-                        <span className="text-blue-600">2023-12-07 to 2024-01-15 (39 days)</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-blue-700 font-medium">Current - Breeding Stage:</span>
-                        <span className="text-blue-600 font-medium">2024-01-15 to Present</span>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-4">
                       <span className="font-medium text-gray-600">Current Stage:</span>
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedPig.currentStage === 'breeding' ? 'bg-pink-100 text-pink-800' :
-                          selectedPig.currentStage === 'gestation' ? 'bg-blue-100 text-blue-800' :
-                            selectedPig.currentStage === 'farrowing' ? 'bg-purple-100 text-purple-800' :
-                              selectedPig.currentStage === 'nursery' ? 'bg-green-100 text-green-800' :
-                                'bg-gray-100 text-gray-800'
+                        selectedPig.currentStage === 'gestation' ? 'bg-blue-100 text-blue-800' :
+                          selectedPig.currentStage === 'farrowing' ? 'bg-purple-100 text-purple-800' :
+                            selectedPig.currentStage === 'nursery' ? 'bg-green-100 text-green-800' :
+                              selectedPig.currentStage === 'fattening' ? 'bg-yellow-100 text-yellow-800' :
+                                selectedPig.currentStage === 'sold' ? 'bg-orange-100 text-orange-800' :
+                                  selectedPig.currentStage === 'inhouse' ? 'bg-gray-100 text-gray-800' :
+                                    'bg-gray-100 text-gray-800'
                         }`}>
-                        {selectedPig.currentStage}
+                        {formatValue(selectedPig.currentStage)}
                       </span>
                     </div>
 
-                    <div className="space-y-2">
-                      <p className="text-sm text-gray-600 mb-3">Change stage:</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {['breeding', 'gestation', 'farrowing', 'nursery'].map((stage) => (
-                          <button
-                            key={stage}
-                            onClick={() => handleStageChange(stage)}
-                            disabled={selectedPig.currentStage === stage}
-                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${selectedPig.currentStage === stage
-                                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5'
-                              }`}
-                          >
-                            {stage.charAt(0).toUpperCase() + stage.slice(1)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Medical Records */}
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  <Syringe className="h-5 w-5 mr-2" />
-                  Medical Records
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Vaccinations */}
-                  <div className="bg-green-50 rounded-xl p-4 border border-green-100">
-                    <h4 className="font-medium text-green-800 mb-3">Vaccinations</h4>
-                    <div className="space-y-2">
-                      {selectedPig.vaccinationDates.map((vaccine, index) => (
-                        <div key={index} className="text-sm">
-                          <div className="font-medium text-green-700">{vaccine.vaccineType}</div>
-                          <div className="text-green-600">Given: {vaccine.date}</div>
-                          <div className="text-green-600">Next Due: {vaccine.nextDueDate}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Deworming */}
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                    <h4 className="font-medium text-blue-800 mb-3">Deworming</h4>
-                    <div className="space-y-2">
-                      {selectedPig.dewormingDates.map((medicine, index) => (
-                        <div key={index} className="text-sm">
-                          <div className="font-medium text-blue-700">{medicine.medicineType}</div>
-                          <div className="text-blue-600">Date: {medicine.date}</div>
-                          <div className="text-blue-600">Dosage: {medicine.dosage}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Other Medicines */}
-                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-                    <h4 className="font-medium text-purple-800 mb-3">Other Medicines</h4>
-                    <div className="space-y-2">
-                      {selectedPig.otherMedicines.map((medicine, index) => (
-                        <div key={index} className="text-sm">
-                          <div className="font-medium text-purple-700">{medicine.medicineType}</div>
-                          <div className="text-purple-600">Date: {medicine.date}</div>
-                          <div className="text-purple-600">Dosage: {medicine.dosage}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Breeding Records (for females) */}
-              {selectedPig.sex === 'female' && selectedPig.matingPartners && (
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                    <Heart className="h-5 w-5 mr-2" />
-                    Breeding Records
-                  </h3>
-                  <div className="bg-pink-50 rounded-xl p-4 border border-pink-100">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-medium text-pink-800 mb-3">Mating History</h4>
-                        <div className="space-y-2">
-                          {selectedPig.matingPartners.map((mating, index) => (
-                            <div key={index} className="text-sm bg-white rounded-lg p-3 border border-pink-100">
-                              <div className="font-medium text-pink-700">Partner: {mating.partnerId}</div>
-                              <div className="text-pink-600">Date: {mating.matingDate}</div>
-                              <div className="text-pink-600">Breed: {mating.breed}</div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-medium text-pink-800 mb-3">Pregnancy Summary</h4>
-                        <div className="bg-white rounded-lg p-3 border border-pink-100">
-                          <div className="text-sm space-y-1">
-                            <div>Total Pregnancies: <span className="font-medium">{selectedPig.pregnancyCount}</span></div>
-                            <div>Total Piglets Born: <span className="font-medium">{selectedPig.totalPigletsSummary?.totalBorn}</span></div>
-                            <div>Total Live: <span className="font-medium text-green-600">{selectedPig.totalPigletsSummary?.totalLive}</span></div>
-                            <div>Total Dead: <span className="font-medium text-red-600">{selectedPig.totalPigletsSummary?.totalDead}</span></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Current Stage Details */}
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Current Stage Information</h3>
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <span className="text-sm font-medium text-blue-800">Current Stage:</span>
-                      <span className="ml-2 text-sm text-blue-700 capitalize">{selectedPig.currentStage}</span>
-                    </div>
-                    <div>
-                      <span className="text-sm font-medium text-blue-800">Status:</span>
-                      <span className="ml-2 text-sm text-blue-700 capitalize">{selectedPig.currentStatus}</span>
-                    </div>
-                    {selectedPig.currentStage === 'sold' && selectedPig.soldDate && (
-                      <div>
-                        <span className="text-sm font-medium text-blue-800">Sold Date:</span>
-                        <span className="ml-2 text-sm text-blue-700">{selectedPig.soldDate}</span>
+                    {selectedPig.pregnancyCount !== undefined && selectedPig.sex === 'female' && (
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-gray-600">Pregnancy Count:</span>
+                        <span className="text-gray-900">{formatValue(selectedPig.pregnancyCount)}</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Stage History */}
+              {stageHistory.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Stage History
+                  </h3>
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <div className="space-y-3">
+                      {stageHistory.map((stage, index) => (
+                        <div key={index} className="flex justify-between items-center text-sm">
+                          <span className="text-blue-700 font-medium capitalize">
+                            {formatValue(stage.stageName)} Stage:
+                          </span>
+                          <span className="text-blue-600">
+                            {formatDate(stage.inDate)} to {stage.outDate ? formatDate(stage.outDate) : 'Present'}
+                            ({calculateDaysInStage(stage.inDate, stage.outDate)} days)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Medical Records */}
+              {medicalHistory.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Syringe className="h-5 w-5 mr-2" />
+                    Medical Records
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {(() => {
+                      const groupedRecords = groupMedicalRecordsByType(medicalHistory);
+
+                      return (
+                        <>
+                          {/* Vaccinations */}
+                          <div className="bg-green-50 rounded-xl p-4 border border-green-100">
+                            <h4 className="font-medium text-green-800 mb-3">Vaccinations</h4>
+                            <div className="space-y-2">
+                              {groupedRecords.vaccinations.length > 0 ? (
+                                groupedRecords.vaccinations.map((record, index) => (
+                                  <div key={index} className="text-sm">
+                                    <div className="font-medium text-green-700">
+                                      {formatValue(record.medicineType)}
+                                    </div>
+                                    <div className="text-green-600">Given: {formatDate(record.date)}</div>
+                                    {record.nextDueDate && (
+                                      <div className="text-green-600">Next Due: {formatDate(record.nextDueDate)}</div>
+                                    )}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-sm text-green-600">No vaccination records</div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Deworming */}
+                          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                            <h4 className="font-medium text-blue-800 mb-3">Deworming</h4>
+                            <div className="space-y-2">
+                              {groupedRecords.deworming.length > 0 ? (
+                                groupedRecords.deworming.map((record, index) => (
+                                  <div key={index} className="text-sm">
+                                    <div className="font-medium text-blue-700">
+                                      {formatValue(record.medicineType)}
+                                    </div>
+                                    <div className="text-blue-600">Date: {formatDate(record.date)}</div>
+                                    {record.dosage && (
+                                      <div className="text-blue-600">Dosage: {formatValue(record.dosage)}</div>
+                                    )}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-sm text-blue-600">No deworming records</div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Other Medicines */}
+                          <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                            <h4 className="font-medium text-purple-800 mb-3">Other Medicines</h4>
+                            <div className="space-y-2">
+                              {groupedRecords.medicines.length > 0 ? (
+                                groupedRecords.medicines.map((record, index) => (
+                                  <div key={index} className="text-sm">
+                                    <div className="font-medium text-purple-700">
+                                      {formatValue(record.medicineType)}
+                                    </div>
+                                    <div className="text-purple-600">Date: {formatDate(record.date)}</div>
+                                    {record.dosage && (
+                                      <div className="text-purple-600">Dosage: {formatValue(record.dosage)}</div>
+                                    )}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-sm text-purple-600">No other medicine records</div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
+
+              {/* No Medical Records Message */}
+              {medicalHistory.length === 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Syringe className="h-5 w-5 mr-2" />
+                    Medical Records
+                  </h3>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <p className="text-gray-600 text-center">No medical records available for this pig</p>
+                  </div>
+                </div>
+              )}
+
+              {/* No Stage History Message */}
+              {stageHistory.length === 0 && (
+                <div className="mt-8">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Stage History
+                  </h3>
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    <p className="text-gray-600 text-center">No stage history available for this pig</p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -331,3 +476,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
