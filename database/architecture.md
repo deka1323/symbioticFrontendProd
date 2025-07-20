@@ -39,6 +39,7 @@ Attributes:
 - origin (String) - "in-house" | "purchased"
 - isBoar (Boolean) - True if designated as breeding boar
 - pregnancyCount (Number) - For sows only
+- pregnancyFailed (Boolean) - True if moved from gestation to fattening due to pregnancy failure
 - soldDate (String) - Date when sold (if applicable)
 - createdAt (String) - ISO timestamp
 - updatedAt (String) - ISO timestamp
@@ -82,7 +83,25 @@ Attributes:
 - inDate (String) - Entry date to stage
 - outDate (String) - Exit date from stage
 - status (String) - "active" | "completed"
+- pregnancyFailed (Boolean) - True if moved from gestation due to pregnancy failure
 - stageSpecificData (Map) - Stage-specific attributes
+  - For Farrowing stage:
+    - farrowingDate (String)
+    - stillBorn (Number)
+    - mummyBorn (Number)
+    - liveBorn (Number)
+    - deathDuringFarrowing (Number)
+    - atw (Number) - Average total weight
+    - totalBorn (Number) - Calculated total
+    - weaningCount (Number) - Calculated weaning count
+    - remarks (String)
+  - For Breeding stage:
+    - matingDate (String)
+    - sowBreed (String)
+    - boarBreed (String)
+    - sowAge (Number)
+    - boarAge (Number)
+    - notes (String)
 - createdAt (String)
 - updatedAt (String)
 - GSI1PK (String) - STAGE#{stageName}#{status}
@@ -132,6 +151,13 @@ Attributes:
 - farrowingDate (String) - Birth date of piglets
 - weaningDate (String) - Weaning date
 - totalPiglets (Number) - Total piglets in litter
+- stillBorn (Number) - Number of stillborn piglets
+- mummyBorn (Number) - Number of mummy born piglets
+- liveBorn (Number) - Number of live born piglets
+- deathDuringFarrowing (Number) - Deaths during farrowing process
+- atw (Number) - Average total weight in kg
+- totalBorn (Number) - Total piglets born (calculated: stillBorn + mummyBorn + liveBorn)
+- weaningCount (Number) - Number of piglets weaned (calculated: liveBorn - deathDuringFarrowing)
 - inDate (String) - Entry to nursery
 - outDate (String) - Exit from nursery
 - status (String) - "active" | "completed"
@@ -403,6 +429,7 @@ const transactParams = {
           recordId: gestationId,
           inDate: today,
           status: "active",
+          pregnancyFailed: false,
           stageSpecificData: {
             breedingRecordId: breedingId,
             expectedExitDate: expectedDate,
@@ -424,6 +451,66 @@ const transactParams = {
 ```
 
 ### 3. Gestation Stage Page
+
+#### Move to Fattening (Pregnancy Failed)
+
+```javascript
+// Transaction: Mark pregnancy as failed and move to fattening
+const transactParams = {
+  TransactItems: [
+    {
+      Update: {
+        TableName: "PigFarm-Data",
+        Key: {
+          PK: `PIG#${sowId}`,
+          SK: `STAGE#${currentStageNumber}#gestation#${gestationId}`,
+        },
+        UpdateExpression:
+          "SET outDate = :outDate, #status = :status, pregnancyFailed = :failed",
+        ExpressionAttributeNames: { "#status": "status" },
+        ExpressionAttributeValues: {
+          ":outDate": today,
+          ":status": "completed",
+          ":failed": true,
+        },
+      },
+    },
+    {
+      Put: {
+        TableName: "PigFarm-Data",
+        Item: {
+          PK: `PIG#${sowId}`,
+          SK: `STAGE#${nextStageNumber}#fattening#${fatteningId}`,
+          pigId: sowId,
+          stageName: "fattening",
+          stageNumber: nextStageNumber,
+          recordId: fatteningId,
+          inDate: today,
+          status: "active",
+          pregnancyFailed: true,
+          stageSpecificData: {
+            previousStage: "gestation",
+            pregnancyFailedDate: today,
+            reason: "pregnancy_failed",
+          },
+        },
+      },
+    },
+    {
+      Update: {
+        TableName: "PigFarm-Data",
+        Key: { PK: `PIG#${sowId}`, SK: "PROFILE" },
+        UpdateExpression:
+          "SET currentStage = :stage, pregnancyFailed = :failed",
+        ExpressionAttributeValues: {
+          ":stage": "fattening",
+          ":failed": true,
+        },
+      },
+    },
+  ],
+};
+```
 
 #### Get Current Gestation Records
 
@@ -490,13 +577,16 @@ const params = {
   TableName: "PigFarm-Data",
   Key: { PK: `PIG#${pigId}`, SK: `STAGE#${stageNumber}#farrowing#${recordId}` },
   UpdateExpression:
-    "SET stageSpecificData.farrowingDate = :fDate, stageSpecificData.stillBorn = :still, stageSpecificData.mummyBorn = :mummy, stageSpecificData.liveBorn = :live, stageSpecificData.atw = :atw, stageSpecificData.remarks = :remarks",
+    "SET stageSpecificData.farrowingDate = :fDate, stageSpecificData.stillBorn = :still, stageSpecificData.mummyBorn = :mummy, stageSpecificData.liveBorn = :live, stageSpecificData.deathDuringFarrowing = :death, stageSpecificData.atw = :atw, stageSpecificData.totalBorn = :total, stageSpecificData.weaningCount = :weaning, stageSpecificData.remarks = :remarks",
   ExpressionAttributeValues: {
     ":fDate": farrowingDate,
     ":still": stillBorn,
     ":mummy": mummyBorn,
     ":live": liveBorn,
-    ":atw": stillBorn + mummyBorn + liveBorn,
+    ":death": deathDuringFarrowing,
+    ":atw": atw,
+    ":total": stillBorn + mummyBorn + liveBorn,
+    ":weaning": liveBorn - deathDuringFarrowing,
     ":remarks": remarks,
   },
 };

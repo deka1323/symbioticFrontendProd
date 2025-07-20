@@ -24,10 +24,11 @@ const GestationStage = () => {
     const movingPigId = useSelector(selectMovingPigId);
 
     const handleMoveToNextStage = async (action, item) => {
-        const loadingToast = toast.loading(`Moving ${item.pigId} to Farrowing stage...`);
+        const nextStage = action.key === 'pregnancy-failed' ? 'Fattening' : 'Farrowing';
+        const loadingToast = toast.loading(`Moving ${item.pigId} to ${nextStage} stage...`);
 
         try {
-            const result = await dispatch(moveToNextStage(item.pigId, 'gestation'));
+            const result = await dispatch(moveToNextStage(item.pigId, 'gestation', action.key === 'pregnancy-failed'));
 
             if (result.success) {
                 toast.success(`${item.pigId} successfully moved to ${result.nextStage} stage!`, {
@@ -35,7 +36,7 @@ const GestationStage = () => {
                     duration: 3000,
                 });
             } else {
-                toast.error('Failed to move pig to next stage', {
+                toast.error(`Failed to move pig to ${nextStage} stage`, {
                     id: loadingToast,
                 });
             }
@@ -155,6 +156,26 @@ const GestationStage = () => {
                     )}
                 </>
             )
+        },
+        {
+            key: 'pregnancy-failed',
+            label: 'Pregnancy Failed',
+            className: 'inline-flex items-center px-2 sm:px-3 py-1 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
+            requiresConfirmation: true,
+            confirmationMessage: 'This will mark the pregnancy as failed and move the pig to Fattening stage. This action cannot be reversed.',
+            disabled: (item) => isMovingPig && movingPigId === item.id,
+            render: (item) => (
+                <>
+                    {isMovingPig && movingPigId === item.id ? (
+                        <>
+                            <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-red-600 mr-1"></div>
+                            Processing...
+                        </>
+                    ) : (
+                        'Pregnancy Failed'
+                    )}
+                </>
+            )
         }
     ];
 
@@ -203,8 +224,8 @@ const GestationStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                            ? 'border-blue-500 text-blue-600 bg-blue-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -213,8 +234,8 @@ const GestationStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                            ? 'border-blue-500 text-blue-600 bg-blue-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />

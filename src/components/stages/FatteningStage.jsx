@@ -71,7 +71,8 @@ const FatteningStage = () => {
             sex: 'female',
             weight: 45.5,
             inDate: '2024-03-01',
-            status: 'active'
+            status: 'active',
+            pregnancyFailed: false
         },
         {
             id: 'FT002',
@@ -82,7 +83,8 @@ const FatteningStage = () => {
             sex: 'male',
             weight: 52.3,
             inDate: '2024-03-01',
-            status: 'active'
+            status: 'active',
+            pregnancyFailed: false
         },
         {
             id: 'FT003',
@@ -93,7 +95,8 @@ const FatteningStage = () => {
             sex: 'female',
             weight: 38.7,
             inDate: '2024-03-05',
-            status: 'active'
+            status: 'active',
+            pregnancyFailed: true
         }
     ];
 
@@ -109,7 +112,8 @@ const FatteningStage = () => {
             inDate: '2024-01-15',
             outDate: '2024-02-20',
             status: 'sold',
-            outcome: 'Sold to market'
+            outcome: 'Sold to market',
+            pregnancyFailed: false
         }
     ];
 
@@ -154,6 +158,24 @@ const FatteningStage = () => {
             render: (value) => `${value} kg`
         },
         { key: 'inDate', label: 'In Date', sortable: true },
+        {
+            key: 'pregnancyFailed',
+            label: 'Status',
+            sortable: true,
+            render: (value, item) => (
+                <div>
+                    {value ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            Pregnancy Failed
+                        </span>
+                    ) : (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Normal
+                        </span>
+                    )}
+                </div>
+            )
+        },
     ];
 
     // History records table columns
@@ -190,7 +212,23 @@ const FatteningStage = () => {
         },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'outDate', label: 'Out Date', sortable: true },
-        { key: 'outcome', label: 'Outcome', sortable: false }
+        { key: 'outcome', label: 'Outcome', sortable: false },
+        {
+            key: 'pregnancyFailed',
+            label: 'Status',
+            sortable: true,
+            render: (value) => (
+                value ? (
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                        Pregnancy Failed
+                    </span>
+                ) : (
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        Normal
+                    </span>
+                )
+            )
+        }
     ];
 
     // Action buttons for current records

@@ -1,22 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Heart, Plus, Calendar, History } from 'lucide-react';
+import { Heart, Plus, Calendar, History, Edit, X } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
 import {
-    addBreedingRecord,
-    moveToGestation
-} from '../../store/actions/pigActions';
+    updateBreedingRecord
+} from '../../actions/breedingActions';
 import {
     selectCurrentBreedingRecords,
     selectBreedingHistory,
     selectIsMovingPig,
-    selectMovingPigId
+    selectMovingPigId,
+    selectIsLoading
 } from '../../store/selectors/pigSelectors';
 import AdvancedTable from '../common/AdvancedTable';
+import { createBreedingRecord } from '../../actions/breedingActions';
+import { moveBreedingToGestation } from '../../actions/breedingActions';
+import { getBreedingRecords } from '../../actions/breedingActions';
 
 const BreedingStage = () => {
     const dispatch = useDispatch();
     const [showNewBreeding, setShowNewBreeding] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingRecord, setEditingRecord] = useState(null);
     const [sowId, setSowId] = useState('');
     const [boarId, setBoarId] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('current');
@@ -24,6 +29,15 @@ const BreedingStage = () => {
     // Month filter for history
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    const [editForm, setEditForm] = useState({
+        matingDate: '',
+        sowBreed: '',
+        boarBreed: '',
+        sowAge: '',
+        boarAge: '',
+        notes: ''
+    });
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -35,6 +49,7 @@ const BreedingStage = () => {
     const breedingHistory = useSelector(selectBreedingHistory);
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
+    const isLoading = useSelector(selectIsLoading);
 
     // Filter history records by month
     const filteredHistoryRecords = breedingHistory.filter(record => {
@@ -43,7 +58,12 @@ const BreedingStage = () => {
         return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
     });
 
-    const handleNewBreeding = () => {
+    useEffect(() => {
+        // Fetch breeding records on component mount
+        dispatch(getBreedingRecords());
+    }, [dispatch]);
+
+    const handleNewBreeding = async () => {
         if (!sowId || !boarId) {
             toast.error('Please enter both Sow ID and Boar ID');
             return;
@@ -58,18 +78,53 @@ const BreedingStage = () => {
             boarAge: 24
         };
 
-        dispatch(addBreedingRecord(newRecord));
-        toast.success('New breeding record created successfully!');
-        setShowNewBreeding(false);
-        setSowId('');
-        setBoarId('');
+        try {
+            await dispatch(createBreedingRecord(newRecord));
+            toast.success('New breeding record created successfully!');
+            setShowNewBreeding(false);
+            setSowId('');
+            setBoarId('');
+        } catch (error) {
+            toast.error('Failed to create breeding record');
+        }
+    };
+
+    const handleEditRecord = (record) => {
+        setEditingRecord(record);
+        setEditForm({
+            matingDate: record.matingDate || '',
+            sowBreed: record.sowBreed || '',
+            boarBreed: record.boarBreed || '',
+            sowAge: record.sowAge || '',
+            boarAge: record.boarAge || '',
+            notes: record.notes || ''
+        });
+        setShowEditModal(true);
+    };
+
+    const handleSaveEdit = async () => {
+        try {
+            const updatedRecord = {
+                ...editingRecord,
+                ...editForm,
+                sowAge: parseInt(editForm.sowAge) || editingRecord.sowAge,
+                boarAge: parseInt(editForm.boarAge) || editingRecord.boarAge
+            };
+
+            await dispatch(updateBreedingRecord(updatedRecord));
+            toast.success('Breeding record updated successfully!');
+            setShowEditModal(false);
+            setEditingRecord(null);
+        } catch (error) {
+            toast.error('Failed to update breeding record');
+        }
     };
 
     const handleMoveToGestation = async (action, item) => {
         const loadingToast = toast.loading(`Moving ${item.sowId} to Gestation stage...`);
 
         try {
-            const result = await dispatch(moveToGestation(item.id));
+            const result = await dispatch(moveBreedingToGestation(item.id));
 
             if (result.success) {
                 toast.success(`${item.sowId} successfully moved to ${result.targetStage} stage!`, {
@@ -149,6 +204,17 @@ const BreedingStage = () => {
     // Action buttons for current breeding
     const currentBreedingActions = [
         {
+            key: 'edit',
+            label: 'Edit Details',
+            className: 'text-pink-600 hover:text-pink-900 text-xs sm:text-sm mr-2',
+            render: () => (
+                <div className="flex items-center">
+                    <Edit className="h-3 w-3 mr-1" />
+                    Edit
+                </div>
+            )
+        },
+        {
             key: 'move',
             label: 'Move to Gestation',
             className: 'inline-flex items-center px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
@@ -172,7 +238,21 @@ const BreedingStage = () => {
 
     // Action buttons for history
     const historyBreedingActions = [
+        {
+            key: 'view',
+            label: 'View Details',
+            className: 'text-pink-600 hover:text-pink-900 text-xs sm:text-sm',
+            render: () => 'View Details'
+        }
     ];
+
+    const handleAction = (action, item) => {
+        if (action.key === 'edit') {
+            handleEditRecord(item);
+        } else if (action.key === 'move') {
+            handleMoveToGestation(action, item);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -254,9 +334,10 @@ const BreedingStage = () => {
                                 </button>
                                 <button
                                     onClick={handleNewBreeding}
-                                    className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors duration-200"
+                                    disabled={isLoading}
+                                    className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors duration-200 disabled:opacity-50"
                                 >
-                                    Create Breeding Record
+                                    {isLoading ? 'Creating...' : 'Create Breeding Record'}
                                 </button>
                             </div>
                         </div>
@@ -269,8 +350,8 @@ const BreedingStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                            ? 'border-pink-500 text-pink-600 bg-pink-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-pink-500 text-pink-600 bg-pink-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -279,8 +360,8 @@ const BreedingStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                            ? 'border-pink-500 text-pink-600 bg-pink-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-pink-500 text-pink-600 bg-pink-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
@@ -293,13 +374,16 @@ const BreedingStage = () => {
                             {selectedFilter === 'current' && (
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Breeding Records</h3>
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        Click Edit to modify breeding details including mating date
+                                    </p>
                                     <AdvancedTable
                                         data={currentBreeding}
                                         columns={currentBreedingColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="sowId"
                                         actionButtons={currentBreedingActions}
-                                        onAction={handleMoveToGestation}
+                                        onAction={handleAction}
                                     />
                                 </div>
                             )}
@@ -343,6 +427,130 @@ const BreedingStage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-semibold text-gray-900">
+                                Edit Breeding Details - {editingRecord?.sowId}
+                            </h3>
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="text-gray-400 hover:text-gray-600"
+                            >
+                                <X className="h-6 w-6" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Mating Date *
+                                </label>
+                                <input
+                                    type="date"
+                                    value={editForm.matingDate}
+                                    onChange={(e) => setEditForm({ ...editForm, matingDate: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Sow Breed
+                                </label>
+                                <select
+                                    value={editForm.sowBreed}
+                                    onChange={(e) => setEditForm({ ...editForm, sowBreed: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                >
+                                    <option value="">Select Breed</option>
+                                    <option value="Yorkshire">Yorkshire</option>
+                                    <option value="Landrace">Landrace</option>
+                                    <option value="Duroc">Duroc</option>
+                                    <option value="Hampshire">Hampshire</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Boar Breed
+                                </label>
+                                <select
+                                    value={editForm.boarBreed}
+                                    onChange={(e) => setEditForm({ ...editForm, boarBreed: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                >
+                                    <option value="">Select Breed</option>
+                                    <option value="Yorkshire">Yorkshire</option>
+                                    <option value="Landrace">Landrace</option>
+                                    <option value="Duroc">Duroc</option>
+                                    <option value="Hampshire">Hampshire</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Sow Age (months)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="6"
+                                    max="120"
+                                    value={editForm.sowAge}
+                                    onChange={(e) => setEditForm({ ...editForm, sowAge: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Boar Age (months)
+                                </label>
+                                <input
+                                    type="number"
+                                    min="6"
+                                    max="120"
+                                    value={editForm.boarAge}
+                                    onChange={(e) => setEditForm({ ...editForm, boarAge: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                />
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Notes
+                                </label>
+                                <textarea
+                                    value={editForm.notes}
+                                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                                    rows="3"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                                    placeholder="Enter any additional notes..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-4 mt-6">
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSaveEdit}
+                                disabled={isLoading}
+                                className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors duration-200 disabled:opacity-50"
+                            >
+                                {isLoading ? 'Saving...' : 'Save Changes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

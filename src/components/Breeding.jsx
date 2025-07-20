@@ -253,8 +253,8 @@ const BreedingStage = () => {
                 <button
                   onClick={() => setSelectedFilter('current')}
                   className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                      ? 'border-pink-500 text-pink-600 bg-pink-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-pink-500 text-pink-600 bg-pink-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                 >
                   <Calendar className="h-4 w-4 inline mr-2" />
@@ -263,8 +263,8 @@ const BreedingStage = () => {
                 <button
                   onClick={() => setSelectedFilter('history')}
                   className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                      ? 'border-pink-500 text-pink-600 bg-pink-50'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-pink-500 text-pink-600 bg-pink-50'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                 >
                   <History className="h-4 w-4 inline mr-2" />

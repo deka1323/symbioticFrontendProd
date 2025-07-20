@@ -26,6 +26,8 @@ const FarrowingStage = () => {
         stillBorn: 0,
         mummyBorn: 0,
         liveBorn: 0,
+        deathDuringFarrowing: 0,
+        atw: 0,
         remarks: ''
     });
 
@@ -64,6 +66,8 @@ const FarrowingStage = () => {
                 stillBorn: item.stillBorn || 0,
                 mummyBorn: item.mummyBorn || 0,
                 liveBorn: item.liveBorn || 0,
+                deathDuringFarrowing: item.deathDuringFarrowing || 0,
+                atw: item.atw || 0,
                 remarks: item.remarks || ''
             });
             setShowEditModal(true);
@@ -73,7 +77,7 @@ const FarrowingStage = () => {
     const handleSaveEdit = () => {
         // Calculate totals
         const totalBorn = parseInt(editForm.stillBorn) + parseInt(editForm.mummyBorn) + parseInt(editForm.liveBorn);
-        const weaningCount = parseInt(editForm.liveBorn);
+        const weaningCount = parseInt(editForm.liveBorn) - parseInt(editForm.deathDuringFarrowing);
 
         // Here you would dispatch an action to update the record
         toast.success('Farrowing details updated successfully!');
@@ -91,8 +95,9 @@ const FarrowingStage = () => {
             stillBorn: 1,
             mummyBorn: 0,
             liveBorn: 8,
+            deathDuringFarrowing: 0,
             weaningDate: null,
-            weaningCount: 8,
+            weaningCount: 8, // liveBorn - deathDuringFarrowing
             atw: 9,
             breed: 'Yorkshire',
             status: 'active',
@@ -106,8 +111,9 @@ const FarrowingStage = () => {
             stillBorn: 0,
             mummyBorn: 1,
             liveBorn: 7,
+            deathDuringFarrowing: 1,
             weaningDate: null,
-            weaningCount: 7,
+            weaningCount: 6, // liveBorn - deathDuringFarrowing
             atw: 8,
             breed: 'Landrace',
             status: 'active',
@@ -125,6 +131,7 @@ const FarrowingStage = () => {
             stillBorn: 2,
             mummyBorn: 0,
             liveBorn: 6,
+            deathDuringFarrowing: 0,
             weaningDate: '2024-01-15',
             weaningCount: 6,
             atw: 8,
@@ -143,8 +150,20 @@ const FarrowingStage = () => {
         { key: 'stillBorn', label: 'Still Born', sortable: true },
         { key: 'mummyBorn', label: 'Mummy Born', sortable: true },
         { key: 'liveBorn', label: 'Live Born', sortable: true },
+        { key: 'deathDuringFarrowing', label: 'Death During Farrowing', sortable: true },
+        {
+            key: 'totalBorn',
+            label: 'Total Pig Born',
+            sortable: true,
+            render: (value, item) => item.stillBorn + item.mummyBorn + item.liveBorn
+        },
         { key: 'weaningCount', label: 'No of Weaning', sortable: true },
-        { key: 'atw', label: 'ATW', sortable: true },
+        {
+            key: 'atw',
+            label: 'ATW (kg)',
+            sortable: true,
+            render: (value) => `${value} kg`
+        },
     ];
 
     // History records table columns
@@ -158,7 +177,19 @@ const FarrowingStage = () => {
         { key: 'stillBorn', label: 'Still Born', sortable: true },
         { key: 'mummyBorn', label: 'Mummy Born', sortable: true },
         { key: 'liveBorn', label: 'Live Born', sortable: true },
-        { key: 'atw', label: 'ATW', sortable: true }
+        { key: 'deathDuringFarrowing', label: 'Death During Farrowing', sortable: true },
+        {
+            key: 'totalBorn',
+            label: 'Total Pig Born',
+            sortable: true,
+            render: (value, item) => item.stillBorn + item.mummyBorn + item.liveBorn
+        },
+        {
+            key: 'atw',
+            label: 'ATW (kg)',
+            sortable: true,
+            render: (value) => `${value} kg`
+        }
     ];
 
     const filteredHistoryRecords = mockHistoryRecords.filter(record => {
@@ -252,8 +283,8 @@ const FarrowingStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                            ? 'border-purple-500 text-purple-600 bg-purple-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-purple-500 text-purple-600 bg-purple-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -262,8 +293,8 @@ const FarrowingStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                            ? 'border-purple-500 text-purple-600 bg-purple-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-purple-500 text-purple-600 bg-purple-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
@@ -404,6 +435,34 @@ const FarrowingStage = () => {
                                 />
                             </div>
 
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Death During Farrowing
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={editForm.deathDuringFarrowing}
+                                    onChange={(e) => setEditForm({ ...editForm, deathDuringFarrowing: parseInt(e.target.value) || 0 })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    ATW - Average Weight (kg)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={editForm.atw}
+                                    onChange={(e) => setEditForm({ ...editForm, atw: parseFloat(e.target.value) || 0 })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                                    placeholder="Enter average weight"
+                                />
+                            </div>
+
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Remarks
@@ -420,16 +479,30 @@ const FarrowingStage = () => {
                             {/* Calculated Values Display */}
                             <div className="md:col-span-2 bg-gray-50 p-4 rounded-lg">
                                 <h4 className="font-medium text-gray-900 mb-2">Calculated Values:</h4>
-                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                     <div>
-                                        <span className="text-gray-600">ATW (All Total):</span>
+                                        <span className="text-gray-600">Total Pig Born:</span>
                                         <span className="ml-2 font-medium">
                                             {editForm.stillBorn + editForm.mummyBorn + editForm.liveBorn}
                                         </span>
                                     </div>
                                     <div>
                                         <span className="text-gray-600">No of Weaning:</span>
-                                        <span className="ml-2 font-medium">{editForm.liveBorn}</span>
+                                        <span className="ml-2 font-medium">
+                                            {editForm.liveBorn - editForm.deathDuringFarrowing}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Survival Rate:</span>
+                                        <span className="ml-2 font-medium">
+                                            {editForm.liveBorn > 0
+                                                ? ((editForm.liveBorn - editForm.deathDuringFarrowing) / editForm.liveBorn * 100).toFixed(1)
+                                                : 0}%
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">ATW:</span>
+                                        <span className="ml-2 font-medium">{editForm.atw} kg</span>
                                     </div>
                                 </div>
                             </div>
