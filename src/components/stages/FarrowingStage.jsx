@@ -1,20 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Baby, Calendar, History, Edit, X } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
-import { moveToNextStage } from '../../store/actions/pigActions';
-import { selectIsMovingPig, selectMovingPigId } from '../../store/selectors/pigSelectors';
 import AdvancedTable from '../common/AdvancedTable';
+import {
+    fetchCurrentFarrowingRecords,
+    fetchFarrowingHistoryByMonth,
+    updateFarrowingRecord,
+    moveFarrowingToNursery,
+    fetchCurrentFarm
+} from '../../store/actions/pigActions';
+import {
+    currentFarmRecord,
+    selectCurrentFarrowingRecords,
+    selectFarrowingHistory,
+    selectIsMovingPig,
+    selectMovingPigId
+} from '../../store/selectors/pigSelectors';
 
 const FarrowingStage = () => {
     const dispatch = useDispatch();
+    // const selectedFarm = useSelector((state) => state.farm.selectedFarm);
+    const currentFarrowingRecords = useSelector(selectCurrentFarrowingRecords);
+    const farrowingHistoryRecords = useSelector(selectFarrowingHistory);
+    const isMovingPig = useSelector(selectIsMovingPig);
+    const movingPigId = useSelector(selectMovingPigId);
+
     const [selectedFilter, setSelectedFilter] = useState('current');
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
-
-    // Month filter for history
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+    // const [selectedFarm, setSelectedFarm] = useState("F1")
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
@@ -31,35 +49,43 @@ const FarrowingStage = () => {
         remarks: ''
     });
 
-    // Redux selectors
-    const isMovingPig = useSelector(selectIsMovingPig);
-    const movingPigId = useSelector(selectMovingPigId);
+    useEffect(() => {
+        dispatch(fetchCurrentFarm());
+    }, [dispatch])
+
+    const selectedFarm = useSelector(currentFarmRecord);
+
+    console.log("Current selected Farm -", selectedFarm)
+
+
+    useEffect(() => {
+        if (selectedFilter === 'current') {
+            dispatch(fetchCurrentFarrowingRecords(selectedFarm));
+        } else {
+            dispatch(fetchFarrowingHistoryByMonth(selectedYear, selectedMonth + 1, selectedFarm));
+        }
+    }, [dispatch, selectedFilter, selectedMonth, selectedYear]);
 
     const handleMoveToNextStage = async (action, item) => {
         const loadingToast = toast.loading(`Moving ${item.pigId} to Nursery stage...`);
 
         try {
-            const result = await dispatch(moveToNextStage(item.pigId, 'farrowing'));
+            const result = await dispatch(moveFarrowingToNursery(item));
+            console.log("farrowing result ->", result)
 
             if (result.success) {
-                toast.success(`${item.pigId} successfully moved to ${result.nextStage} stage!`, {
-                    id: loadingToast,
-                    duration: 3000,
-                });
+                toast.success(`${item.pigId} moved to Nursery stage`, { id: loadingToast });
             } else {
-                toast.error('Failed to move pig to next stage', {
-                    id: loadingToast,
-                });
+                toast.error('Failed to move to nursery', { id: loadingToast });
             }
         } catch (error) {
-            toast.error('An error occurred while moving the pig', {
-                id: loadingToast,
-            });
+            toast.error('Error moving pig', { id: loadingToast });
         }
     };
 
     const handleRowClick = (item) => {
         if (selectedFilter === 'current') {
+            console.log("handleRowClick")
             setEditingRecord(item);
             setEditForm({
                 farrowingDate: item.farrowingDate || '',
@@ -74,74 +100,44 @@ const FarrowingStage = () => {
         }
     };
 
-    const handleSaveEdit = () => {
-        // Calculate totals
-        const totalBorn = parseInt(editForm.stillBorn) + parseInt(editForm.mummyBorn) + parseInt(editForm.liveBorn);
-        const weaningCount = parseInt(editForm.liveBorn) - parseInt(editForm.deathDuringFarrowing);
-
-        // Here you would dispatch an action to update the record
-        toast.success('Farrowing details updated successfully!');
-        setShowEditModal(false);
-        setEditingRecord(null);
+    const handleEditRecord = (item) => {
+        setEditingRecord(item);
+        setEditForm({
+            farrowingDate: item.farrowingDate || '',
+            stillBorn: item.stillBorn || 0,
+            mummyBorn: item.mummyBorn || 0,
+            liveBorn: item.liveBorn || 0,
+            deathDuringFarrowing: item.deathDuringFarrowing || 0,
+            atw: item.atw || 0,
+            remarks: item.remarks || ''
+        });
+        setShowEditModal(true);
     };
 
-    // Mock data for demonstration
-    const mockCurrentRecords = [
-        {
-            id: 'FR001',
-            pigId: 'PIG001',
-            inDate: '2024-01-15',
-            farrowingDate: '2024-02-10',
-            stillBorn: 1,
-            mummyBorn: 0,
-            liveBorn: 8,
-            deathDuringFarrowing: 0,
-            weaningDate: null,
-            weaningCount: 8, // liveBorn - deathDuringFarrowing
-            atw: 9,
-            breed: 'Yorkshire',
-            status: 'active',
-            remarks: 'Healthy delivery'
-        },
-        {
-            id: 'FR002',
-            pigId: 'PIG025',
-            inDate: '2024-01-10',
-            farrowingDate: '2024-02-05',
-            stillBorn: 0,
-            mummyBorn: 1,
-            liveBorn: 7,
-            deathDuringFarrowing: 1,
-            weaningDate: null,
-            weaningCount: 6, // liveBorn - deathDuringFarrowing
-            atw: 8,
-            breed: 'Landrace',
-            status: 'active',
-            remarks: 'One mummy birth'
-        }
-    ];
+    const handleSaveEdit = async () => {
+        const updatedRecord = {
+            ...editingRecord,
+            ...editForm,
+            stillBorn: parseInt(editForm.stillBorn),
+            mummyBorn: parseInt(editForm.mummyBorn),
+            liveBorn: parseInt(editForm.liveBorn),
+            deathDuringFarrowing: parseInt(editForm.deathDuringFarrowing),
+            atw: parseFloat(editForm.atw),
+            totalBorn: parseInt(editForm.stillBorn) + parseInt(editForm.mummyBorn) + parseInt(editForm.liveBorn),
+            weaningCount: parseInt(editForm.liveBorn) - parseInt(editForm.deathDuringFarrowing),
+            selectedFarm,
+        };
 
-    const mockHistoryRecords = [
-        {
-            id: 'FR003',
-            pigId: 'PIG015',
-            inDate: '2023-12-01',
-            outDate: '2024-01-15',
-            farrowingDate: '2023-12-20',
-            stillBorn: 2,
-            mummyBorn: 0,
-            liveBorn: 6,
-            deathDuringFarrowing: 0,
-            weaningDate: '2024-01-15',
-            weaningCount: 6,
-            atw: 8,
-            breed: 'Yorkshire',
-            status: 'completed',
-            remarks: 'Successful weaning'
+        try {
+            await dispatch(updateFarrowingRecord(updatedRecord));
+            toast.success('Farrowing details updated successfully!');
+            setShowEditModal(false);
+            setEditingRecord(null);
+        } catch (err) {
+            toast.error('Failed to update farrowing record');
         }
-    ];
+    };
 
-    // Current records table columns
     const currentRecordsColumns = [
         { key: 'id', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
@@ -166,7 +162,6 @@ const FarrowingStage = () => {
         },
     ];
 
-    // History records table columns
     const historyRecordsColumns = [
         { key: 'id', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
@@ -192,12 +187,6 @@ const FarrowingStage = () => {
         }
     ];
 
-    const filteredHistoryRecords = mockHistoryRecords.filter(record => {
-        const recordDate = new Date(record.outDate);
-        return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
-    });
-
-    // Action buttons for current records
     const currentRecordsActions = [
         {
             key: 'edit',
@@ -232,7 +221,6 @@ const FarrowingStage = () => {
         }
     ];
 
-    // Action buttons for history
     const historyRecordsActions = [
         {
             key: 'view',
@@ -242,6 +230,25 @@ const FarrowingStage = () => {
         }
     ];
 
+    const handleAction = (action, item) => {
+        if (action.key === 'edit') {
+            console.log("item edit ->", item)
+            handleEditRecord(item);
+        } else if (action.key === 'move') {
+            console.log("item move ->", item)
+            handleMoveToNextStage(action, item);
+        }
+    };
+
+    // return (
+    //     <div className="min-h-screen bg-gray-50">
+    //         <Toaster position="top-right" />
+    //         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    //             {/* Tabs and Content Rendering Below */}
+    //             {/* Edit Modal, AdvancedTable usage, etc. remain same */}
+    //         </div>
+    //     </div>
+    // );
     return (
         <div className="min-h-screen bg-gray-50">
             <Toaster
@@ -288,7 +295,7 @@ const FarrowingStage = () => {
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
-                                    Current Farrowing ({mockCurrentRecords.length})
+                                    Current Farrowing {selectedFilter === 'current' && ` (${currentFarrowingRecords.length})`}
                                 </button>
                                 <button
                                     onClick={() => setSelectedFilter('history')}
@@ -298,7 +305,7 @@ const FarrowingStage = () => {
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
-                                    History ({filteredHistoryRecords.length})
+                                    History {selectedFilter === 'history' && ` (${farrowingHistoryRecords.length})`}
                                 </button>
                             </nav>
                         </div>
@@ -313,14 +320,14 @@ const FarrowingStage = () => {
                                         Click on any row to edit farrowing details
                                     </p>
                                     <AdvancedTable
-                                        data={mockCurrentRecords}
+                                        data={currentFarrowingRecords}
                                         columns={currentRecordsColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="pigId"
                                         actionButtons={currentRecordsActions}
-                                        onAction={handleMoveToNextStage}
-                                        onRowClick={handleRowClick}
-                                        rowClickable={true}
+                                        onAction={handleAction}
+                                    // onRowClick={handleRowClick}
+                                    // rowClickable={true}
                                     />
                                 </div>
                             )}
@@ -353,7 +360,7 @@ const FarrowingStage = () => {
                                         Farrowing History
                                     </h3>
                                     <AdvancedTable
-                                        data={filteredHistoryRecords}
+                                        data={farrowingHistoryRecords}
                                         columns={historyRecordsColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="pigId"

@@ -15,68 +15,7 @@ const buildQueryString = (params) => {
   return searchParams.toString();
 };
 
-// Get all breeding records with pagination
-export const getBreedingRecords =
-  (lastEvaluatedKey = null, limit = 50) =>
-  async (dispatch) => {
-    try {
-      dispatch({ type: PIG_ACTION_TYPES.FETCH_BREEDING_RECORDS_START });
-      const session = await fetchAuthSession();
-      const idToken = session.tokens?.idToken?.toString();
-
-      const queryParams = { limit };
-      if (lastEvaluatedKey) {
-        queryParams.lastEvaluatedKey = lastEvaluatedKey;
-      }
-
-      const queryString = buildQueryString(queryParams);
-      const response = await fetch(
-        `${API_BASE_URL}/breeding/allRecords?${queryString}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorBody = await response.json();
-        console.log("errorBody -> ", errorBody);
-        dispatch({
-          type: PIG_ACTION_TYPES.FETCH_BREEDING_RECORDS_FAILURE,
-          payload: errorBody.message || "Failed to fetch breeding records", // error message
-        });
-        return {
-          success: false,
-          data: errorBody.message || "Failed to fetch breeding records",
-        };
-      }
-
-      const data = await response.json();
-      // console.log("data -> ", data);
-      dispatch({
-        type: PIG_ACTION_TYPES.FETCH_BREEDING_RECORDS_SUCCESS,
-        payload: data.data,
-      });
-      return {
-        success: true,
-        data: data.data,
-        lastEvaluatedKey: data.lastEvaluatedKey,
-        hasMore: data.hasMore,
-      };
-    } catch (err) {
-      dispatch({
-        type: PIG_ACTION_TYPES.FETCH_BREEDING_RECORDS_FAILURE,
-        payload: err.message, // error message
-      });
-      return { success: false, data: err.message };
-    }
-  };
-
-// Get current active breeding records with pagination - API DONE
-export const getCurrentBreedingRecords = async (
+export const getCurrentNurseryLitterRecords = async (
   selectedFarm,
   lastEvaluatedKey = null,
   limit = 50
@@ -92,7 +31,7 @@ export const getCurrentBreedingRecords = async (
 
     const queryString = buildQueryString(queryParams);
     const response = await fetch(
-      `${API_BASE_URL}/breeding/current/${selectedFarm}?${queryString}`,
+      `${API_BASE_URL}/nursery/currentLitters/${selectedFarm}?${queryString}`,
       {
         method: "GET",
         headers: {
@@ -107,7 +46,8 @@ export const getCurrentBreedingRecords = async (
       console.log("active error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to fetch current breeding records",
+        data:
+          errorBody.message || "Failed to fetch current nursery Litter records",
       };
     }
 
@@ -124,8 +64,7 @@ export const getCurrentBreedingRecords = async (
   }
 };
 
-// Get breeding history by month with pagination - API DONE
-export const getBreedingHistoryByMonth = async (
+export const getNurseryLittersHistoryByMonth = async (
   year,
   month,
   selectedFarm,
@@ -143,7 +82,7 @@ export const getBreedingHistoryByMonth = async (
 
     const queryString = buildQueryString(queryParams);
     const response = await fetch(
-      `${API_BASE_URL}/breeding/history/${selectedFarm}/${year}/${month}?${queryString}`,
+      `${API_BASE_URL}/nursery/historyLitters/${selectedFarm}/${year}/${month}?${queryString}`,
       {
         method: "GET",
         headers: {
@@ -158,7 +97,7 @@ export const getBreedingHistoryByMonth = async (
       console.log("By month error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to fetch breeding history",
+        data: errorBody.message || "Failed to fetch Nursery Litter history",
       };
     }
 
@@ -176,51 +115,17 @@ export const getBreedingHistoryByMonth = async (
   }
 };
 
-// Create new breeding record with validation - API DONE
-export const createBreedingRecord = async (breedingData) => {
+export const updateNurseryPigletBasicRecord = async (updateData) => {
   try {
-    const session = await fetchAuthSession();
-    const idToken = session.tokens?.idToken?.toString();
+    const litterId = updateData.litterId;
+    const pigletId = updateData.pigletId;
 
-    const response = await fetch(`${API_BASE_URL}/breeding/create`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(breedingData),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.json();
-      console.log("Create Breeding record error -> ", errorBody);
-      return {
-        success: false,
-        data: errorBody.message || "Failed to create breeding record",
-      };
-    }
-
-    const data = await response.json();
-    console.log("Create Breeding record data -> ", data);
-    return { success: true, data: data.data };
-  } catch (err) {
-    return { success: false, data: err.message };
-  }
-};
-
-// Update breeding record - API DONE
-export const updateBreedingRecord = async (updateData) => {
-  try {
-    const breedingId = updateData.breedingId;
-    const sowId = updateData.sowId;
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
     console.log("updateData :", updateData);
-    console.log("breedingId :", breedingId);
-    console.log("sowId :", sowId);
 
     const response = await fetch(
-      `${API_BASE_URL}/breeding/update/${breedingId}/${sowId}`,
+      `${API_BASE_URL}/nursery/updateBasicLitter/${litterId}/${pigletId}`,
       {
         method: "POST",
         headers: {
@@ -233,100 +138,120 @@ export const updateBreedingRecord = async (updateData) => {
 
     if (!response.ok) {
       const errorBody = await response.json();
-      console.log("Update Breeding record error -> ", errorBody);
+      console.log("Update nursery record error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to update breeding record",
+        data: errorBody.message || "Failed to update nursery record",
       };
     }
 
     const data = await response.json();
-    console.log("Update Breeding record data -> ", data);
+    console.log("Update nursery record data -> ", data);
     return { success: true, data: data.data };
   } catch (err) {
     return { success: false, data: err.message };
   }
 };
 
-// Move breeding record to gestation - API DONE
-export const moveBreedingToGestation = async (record) => {
+export const updateNurseryPigletRecord = async (updateData) => {
   try {
-    console.log("record from sednddddd ->", record);
-    const breedingId = record.recordId;
+    const litterId = updateData.litterId;
+    const pigletId = updateData.pigletId;
+
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+    console.log("updateData :", updateData);
+
+    const response = await fetch(
+      `${API_BASE_URL}/nursery/updateLitter/${litterId}/${pigletId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateData),
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.log("Update nursery record error -> ", errorBody);
+      return {
+        success: false,
+        data: errorBody.message || "Failed to update nursery record",
+      };
+    }
+
+    const data = await response.json();
+    console.log("Update nursery record data -> ", data);
+    return { success: true, data: data.data };
+  } catch (err) {
+    return { success: false, data: err.message };
+  }
+};
+
+// Send nursery pig to fattening stage
+export const sendToFattening = async (record) => {
+  try {
+    console.log("Sending to fattening ->", record);
     const updateData = {
+      currentStage: "nursery",
+      currentStageId: record.recordId,
+      pigId: record.pigId,
+      isPregnancyFailed: false,
       selectedFarm: record.selectedFarm,
     };
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
 
-    const response = await fetch(
-      `${API_BASE_URL}/breeding/moveToGestation/${breedingId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      }
-    );
-
-    if (!response.ok) {
-      const errorBody = await response.json();
-      console.log("Move to gestation error -> ", errorBody);
-      return {
-        success: false,
-        data: errorBody.message || "Failed to move to gestation",
-      };
-    }
-
-    const data = await response.json();
-    console.log("Move to gestation data -> ", data);
-    return { success: true, data: data.data };
-  } catch (err) {
-    return { success: false, data: err.message };
-  }
-};
-
-// Get breeding record by ID
-export const getBreedingRecordById = async (breedingId) => {
-  try {
-    const session = await fetchAuthSession();
-    const idToken = session.tokens?.idToken?.toString();
-
-    const response = await fetch(`${API_BASE_URL}/breeding/${breedingId}`, {
-      method: "GET",
+    const response = await fetch(`${API_BASE_URL}/gestation/sendToFattening`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${idToken}`,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify(updateData),
     });
 
     if (!response.ok) {
       const errorBody = await response.json();
+      console.log("Send to fattening error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to fetch breeding record",
+        data: errorBody.message || "Failed to move to fattening",
       };
     }
 
     const data = await response.json();
+    console.log("Send to fattening data -> ", data);
     return { success: true, data: data.data };
   } catch (err) {
     return { success: false, data: err.message };
   }
 };
 
-// Delete breeding record
-export const deleteBreedingRecord = async (breedingId) => {
+// Get all active nursery records with pagination
+export const getAllActiveNurseryRecords = async (
+  selectedFarm,
+  lastEvaluatedKey = null,
+  limit = 50
+) => {
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
+    const currentStage = "nursery";
 
+    const queryParams = { limit };
+    if (lastEvaluatedKey) {
+      queryParams.lastEvaluatedKey = lastEvaluatedKey;
+    }
+
+    const queryString = buildQueryString(queryParams);
     const response = await fetch(
-      `${API_BASE_URL}/breeding/delete/${breedingId}`,
+      `${API_BASE_URL}/current/${selectedFarm}/${currentStage}?${queryString}`,
       {
-        method: "DELETE",
+        method: "GET",
         headers: {
           Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
@@ -336,14 +261,21 @@ export const deleteBreedingRecord = async (breedingId) => {
 
     if (!response.ok) {
       const errorBody = await response.json();
+      console.log("Active nursery error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to delete breeding record",
+        data: errorBody.message || "Failed to fetch current nursery records",
       };
     }
 
     const data = await response.json();
-    return { success: true, data: data.data };
+    console.log("Active nursery data -> ", data);
+    return {
+      success: true,
+      data: data.data,
+      lastEvaluatedKey: data.lastEvaluatedKey,
+      hasMore: data.hasMore,
+    };
   } catch (err) {
     return { success: false, data: err.message };
   }

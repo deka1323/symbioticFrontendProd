@@ -1,67 +1,17 @@
 import { PIG_ACTION_TYPES } from "../actions/pigActions";
 
-// Mock data for demonstration
-const mockBreedingRecords = [
-  {
-    id: "BR001",
-    sowId: "PIG001",
-    boarId: "BOAR003",
-    matingDate: "2024-01-15",
-    inDate: "2024-01-15",
-    outDate: null,
-    sowBreed: "Yorkshire",
-    boarBreed: "Duroc",
-    sowAge: 18,
-    boarAge: 24,
-    status: "active",
-  },
-  {
-    id: "BR002",
-    sowId: "PIG025",
-    boarId: "BOAR005",
-    matingDate: "2024-01-10",
-    inDate: "2024-01-10",
-    outDate: null,
-    sowBreed: "Landrace",
-    boarBreed: "Hampshire",
-    sowAge: 22,
-    boarAge: 30,
-    status: "active",
-  },
-  {
-    id: "BR003",
-    sowId: "PIG015",
-    boarId: "BOAR003",
-    matingDate: "2023-12-20",
-    inDate: "2023-12-20",
-    outDate: "2024-01-05",
-    sowBreed: "Yorkshire",
-    boarBreed: "Duroc",
-    sowAge: 20,
-    boarAge: 24,
-    status: "completed",
-  },
-];
-
-const mockGestationRecords = [
-  {
-    id: "GS001",
-    pigId: "PIG001",
-    entryDate: "2024-01-15",
-    expectedExitDate: "2024-05-08",
-    daysInStage: 15,
-    breed: "Yorkshire",
-    weight: 45.5,
-    status: "active",
-    notes: "Regular monitoring required",
-  },
-];
-
 const initialState = {
-  breedingRecords: mockBreedingRecords,
-  gestationRecords: mockGestationRecords,
+  // breedingRecords: mockBreedingRecords,
+  farmRecords: [],
+  selectedFarm: null,
+  breedingRecords: [],
+  gestationRecords: [],
+  currentGestationRecords: [],
+  gestationHistory: [],
   farrowingRecords: [],
-  nurseryRecords: [],
+  nurseryLitterRecords: [],
+  currentNurseryRecords: [],
+  nurseryHistory: [],
   isLoading: false,
   isMovingPig: false,
   movingPigId: null,
@@ -70,6 +20,65 @@ const initialState = {
 
 const pigReducer = (state = initialState, action) => {
   switch (action.type) {
+    case PIG_ACTION_TYPES.FETCH_FARM_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FARM_RECORDS_SUCCESS:
+      return {
+        ...state,
+        farmRecords: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FARM_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_SELECTED_FARM_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_SELECTED_FARM_RECORDS_SUCCESS:
+      return {
+        ...state,
+        selectedFarm: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_SELECTED_FARM_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+
+    case PIG_ACTION_TYPES.ADD_FARM_RECORD: {
+      return {
+        ...state,
+        farmRecords: [...state.farmRecords, action.payload],
+        selectedFarm: action.payload.farmId,
+      };
+    }
+
+    case PIG_ACTION_TYPES.SET_FARM_RECORD: {
+      return {
+        ...state,
+        selectedFarm: action.payload.currentFarmId,
+      };
+    }
+
     case PIG_ACTION_TYPES.FETCH_BREEDING_RECORDS_START:
       return {
         ...state,
@@ -92,6 +101,29 @@ const pigReducer = (state = initialState, action) => {
         error: action.payload,
       };
 
+    case PIG_ACTION_TYPES.FETCH_GESTATION_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_GESTATION_RECORDS_SUCCESS:
+      return {
+        ...state,
+        currentGestationRecords: action.payload,
+        gestationHistory: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_GESTATION_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+
     case PIG_ACTION_TYPES.UPDATE_BREEDING_RECORD:
       return {
         ...state,
@@ -107,7 +139,7 @@ const pigReducer = (state = initialState, action) => {
       const newRecord = {
         ...action.payload,
         id: `BR${Date.now()}`,
-        matingDate: today,
+        // matingDate: today,
         inDate: today,
         outDate: null,
         status: "active",
@@ -133,7 +165,7 @@ const pigReducer = (state = initialState, action) => {
 
       // Update breeding record with out date and status
       const updatedBreedingRecords = state.breedingRecords.map((record) =>
-        record.id === breedingId
+        record.recordId === breedingId
           ? { ...record, outDate: today, status: "completed" }
           : record
       );
@@ -156,33 +188,274 @@ const pigReducer = (state = initialState, action) => {
         error: action.payload.error,
       };
 
-    case PIG_ACTION_TYPES.MOVE_TO_NEXT_STAGE_START:
+    case PIG_ACTION_TYPES.MOVE_TO_FARROWING_START:
       return {
         ...state,
         isMovingPig: true,
-        movingPigId: action.payload.pigId,
+        movingPigId: action.payload.gestationId,
         error: null,
       };
 
-    case PIG_ACTION_TYPES.MOVE_TO_NEXT_STAGE_SUCCESS: {
-      const { pigId, fromStage, toStage } = action.payload;
+    case PIG_ACTION_TYPES.MOVE_TO_FARROWING_SUCCESS: {
+      const { gestationId, farrowingRecord } = action.payload;
+      const today = new Date().toISOString().split("T")[0];
 
-      // This would handle moving records between different stage arrays
-      // For now, we'll just update the loading state
+      // Update gestation record with out date and status
+      const updatedGestationRecords = state.currentGestationRecords.map(
+        (record) =>
+          record.recordId === gestationId
+            ? { ...record, outDate: today, status: "completed" }
+            : record
+      );
+
       return {
         ...state,
+        currentGestationRecords: updatedGestationRecords,
+        farrowingRecords: [...state.farrowingRecords, farrowingRecord],
         isMovingPig: false,
         movingPigId: null,
         error: null,
       };
     }
 
-    case PIG_ACTION_TYPES.MOVE_TO_NEXT_STAGE_FAILURE:
+    case PIG_ACTION_TYPES.MOVE_TO_FARROWING_FAILURE:
       return {
         ...state,
         isMovingPig: false,
         movingPigId: null,
         error: action.payload.error,
+      };
+
+    case PIG_ACTION_TYPES.MOVE_TO_FATTENING_START:
+      return {
+        ...state,
+        isMovingPig: true,
+        movingPigId: action.payload.gestationId,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.MOVE_TO_FATTENING_SUCCESS: {
+      const { gestationId, fatteningRecord } = action.payload;
+      const today = new Date().toISOString().split("T")[0];
+
+      // Update gestation record with out date and status
+      const updatedGestationRecords = state.currentGestationRecords.map(
+        (record) =>
+          record.recordId === gestationId
+            ? {
+                ...record,
+                outDate: today,
+                status: "completed",
+                pregnancyFailed: true,
+              }
+            : record
+      );
+
+      console.log("updatedGestationRecords -->", updatedGestationRecords);
+
+      return {
+        ...state,
+        currentGestationRecords: updatedGestationRecords,
+        isMovingPig: false,
+        movingPigId: null,
+        error: null,
+      };
+    }
+
+    case PIG_ACTION_TYPES.MOVE_TO_FATTENING_FAILURE:
+      return {
+        ...state,
+        isMovingPig: false,
+        movingPigId: null,
+        error: action.payload.error,
+      };
+
+    // farrowing page
+    case PIG_ACTION_TYPES.UPDATE_FARROWING_RECORD:
+      return {
+        ...state,
+        farrowingRecords: state.farrowingRecords.map((record) =>
+          record.recordId === action.payload.recordId
+            ? { ...record, ...action.payload }
+            : record
+        ),
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FARROWING_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FARROWING_RECORDS_SUCCESS:
+      return {
+        ...state,
+        farrowingRecords: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FARROWING_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+    case PIG_ACTION_TYPES.MOVE_TO_NURSERY_START:
+      return {
+        ...state,
+        isMovingPig: true,
+        movingPigId: action.payload.farrowingId,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.MOVE_TO_NURSERY_SUCCESS: {
+      const { farrowingId, nurseryRecord } = action.payload;
+      const today = new Date().toISOString().split("T")[0];
+
+      // Update farrowing record with out date and status
+      const updatedFarrowingRecords = state.farrowingRecords.map((record) =>
+        record.recordId === farrowingId
+          ? { ...record, outDate: today, status: "completed" }
+          : record
+      );
+
+      return {
+        ...state,
+        farrowingRecords: updatedFarrowingRecords,
+        nurseryRecords: [...state.nurseryRecords, nurseryRecord],
+        isMovingPig: false,
+        movingPigId: null,
+        error: null,
+      };
+    }
+
+    case PIG_ACTION_TYPES.MOVE_TO_NURSERY_FAILURE:
+      return {
+        ...state,
+        isMovingPig: false,
+        movingPigId: null,
+        error: action.payload.error,
+      };
+
+      // case PIG_ACTION_TYPES.MOVE_TO_NEXT_STAGE_START:
+      //   return {
+      //     ...state,
+      //     isMovingPig: true,
+      //     movingPigId: action.payload.pigId,
+      //     error: null,
+      //   };
+
+      // case PIG_ACTION_TYPES.MOVE_TO_NEXT_STAGE_SUCCESS: {
+      //   const { pigId, fromStage, toStage } = action.payload;
+
+      //   // This would handle moving records between different stage arrays
+      //   // For now, we'll just update the loading state
+      //   return {
+      //     ...state,
+      //     isMovingPig: false,
+      //     movingPigId: null,
+      //     error: null,
+      //   };
+      // }
+
+      // case PIG_ACTION_TYPES.MOVE_TO_NEXT_STAGE_FAILURE:
+      return {
+        ...state,
+        isMovingPig: false,
+        movingPigId: null,
+        error: action.payload.error,
+      };
+
+    // Nursery
+    case PIG_ACTION_TYPES.FETCH_NURSERYLITTER_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_NURSERYLITTER_RECORDS_SUCCESS:
+      return {
+        ...state,
+        nurseryLitterRecords: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_NURSERYLITTER_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+
+    // case PIG_ACTION_TYPES.UPDATE_BASIC_PIGLET_RECORD:
+    //   return {
+    //     ...state,
+    //     nurseryLitterRecords: state.nurseryLitterRecords.map((record) =>
+    //       record.recordId === action.payload.recordId
+    //         ? { ...record, ...action.payload }
+    //         : record
+    //     ),
+    //   };
+
+    case PIG_ACTION_TYPES.UPDATE_BASIC_PIGLET_RECORD:
+      return {
+        ...state,
+        nurseryLitterRecords: state.nurseryLitterRecords.map((record) =>
+          record.recordId === action.payload.litterId
+            ? {
+                ...record,
+                piglets: record.piglets.map((piglet) =>
+                  piglet.pigletId === action.payload.pigletId
+                    ? { ...piglet, ...action.payload }
+                    : piglet
+                ),
+              }
+            : record
+        ),
+      };
+
+    case PIG_ACTION_TYPES.UPDATE_PIGLET_RECORD:
+      return {
+        ...state,
+        nurseryLitterRecords: state.nurseryLitterRecords.map((record) =>
+          record.recordId === action.payload.litterId
+            ? {
+                ...record,
+                piglets: record.piglets.map((piglet) =>
+                  piglet.pigletId === action.payload.pigletId
+                    ? { ...piglet, ...action.payload }
+                    : piglet
+                ),
+              }
+            : record
+        ),
+      };
+
+    case PIG_ACTION_TYPES.FETCH_NURSERY_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_NURSERY_RECORDS_SUCCESS:
+      return {
+        ...state,
+        currentNurseryRecords: action.payload,
+        nurseryHistory: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_NURSERY_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
       };
 
     case PIG_ACTION_TYPES.SET_LOADING:

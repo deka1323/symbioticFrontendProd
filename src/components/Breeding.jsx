@@ -43,7 +43,7 @@ const BreedingStage = () => {
     };
 
     dispatch(addBreedingRecord(newRecord));
-    toast.success('New breeding record created successfully!');
+    toast.success('New Service record created successfully!');
     setShowNewBreeding(false);
     setSowId('');
     setBoarId('');
@@ -74,7 +74,7 @@ const BreedingStage = () => {
 
   // Current breeding table columns
   const currentBreedingColumns = [
-    { key: 'id', label: 'Breeding ID', sortable: true },
+    { key: 'id', label: 'Service ID', sortable: true },
     {
       key: 'sowId',
       label: 'Sow Details',
@@ -103,7 +103,7 @@ const BreedingStage = () => {
 
   // History breeding table columns
   const historyBreedingColumns = [
-    { key: 'id', label: 'Breeding ID', sortable: true },
+    { key: 'id', label: 'Service ID', sortable: true },
     {
       key: 'sowId',
       label: 'Sow Details',
@@ -184,10 +184,10 @@ const BreedingStage = () => {
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
                 <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-pink-600 mr-2 sm:mr-3" />
-                Breeding Management
+                Service Management
               </h1>
               <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                Manage pig breeding records and track mating activities
+                Manage pig service records and track mating activities
               </p>
             </div>
             <button
@@ -195,14 +195,14 @@ const BreedingStage = () => {
               className="bg-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-pink-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="text-sm sm:text-base">New Breeding</span>
+              <span className="text-sm sm:text-base">New Service</span>
             </button>
           </div>
 
           {/* New Breeding Form */}
           {showNewBreeding && (
             <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 border border-gray-100">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Create New Breeding Record</h2>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Create New Service Record</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -240,7 +240,7 @@ const BreedingStage = () => {
                   onClick={handleNewBreeding}
                   className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors duration-200"
                 >
-                  Create Breeding Record
+                  Create Service Record
                 </button>
               </div>
             </div>
@@ -258,7 +258,7 @@ const BreedingStage = () => {
                     }`}
                 >
                   <Calendar className="h-4 w-4 inline mr-2" />
-                  Current Breeding ({currentBreeding.length})
+                  Current Service ({currentBreeding.length})
                 </button>
                 <button
                   onClick={() => setSelectedFilter('history')}
@@ -268,7 +268,7 @@ const BreedingStage = () => {
                     }`}
                 >
                   <History className="h-4 w-4 inline mr-2" />
-                  Breeding History ({breedingHistory.length})
+                  Service History ({breedingHistory.length})
                 </button>
               </nav>
             </div>
@@ -276,7 +276,7 @@ const BreedingStage = () => {
             <div className="p-4 sm:p-6">
               {selectedFilter === 'current' && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Breeding Records</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Service Records</h3>
                   <AdvancedTable
                     data={currentBreeding}
                     columns={currentBreedingColumns}
@@ -290,7 +290,7 @@ const BreedingStage = () => {
 
               {selectedFilter === 'history' && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Breeding History</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Service History</h3>
                   <AdvancedTable
                     data={breedingHistory}
                     columns={historyBreedingColumns}

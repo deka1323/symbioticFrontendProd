@@ -133,9 +133,9 @@ Attributes:
 - createdAt (String)
 - updatedAt (String)
 - GSI1PK (String) - SOW#{sowId}
-- GSI1SK (String) - BREEDING#{matingDate}
+- GSI1SK (String) - BREEDING#{matingDate}    // as of now inDate
 - GSI2PK (String) - STATUS#{status}
-- GSI2SK (String) - DATE#{matingDate}
+- GSI2SK (String) - DATE#{matingDate}        // as of now inDate
 ```
 
 ### 5. Litter Records (Nursery)
@@ -307,6 +307,16 @@ const params = {
   },
 };
 ```
+
+- GSI1PK (String) - SOW#{sowId}
+- GSI1SK (String) - BREEDING#{matingDate}
+- GSI2PK (String) - STATUS#{status}
+- GSI2SK (String) - DATE#{matingDate}
+
+- GSI1PK (String) - STAGE#{stageName}#{status}
+- GSI1SK (String) - DATE#{inDate}#{pigId}
+- GSI2PK (String) - STAGE#{stageName}
+- GSI2SK (String) - STATUS#{status}#{inDate}
 
 #### Get Breeding History (Month-wise)
 

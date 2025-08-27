@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Edit, Calendar, Syringe, Heart, Users, Loader2, AlertCircle } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { getPigDetailsByPigId, getPigMedicalHistoryByPigId, getPigStageHistoryByPigId } from '../actions/dashboardActions';
+import FarmModal from './FarmModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { currentFarmRecord } from '../store/selectors/pigSelectors';
+import { fetchCurrentFarm } from '../store/actions/pigActions';
+import DataEntry from './DataEntry';
 
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
   const [searchId, setSearchId] = useState('');
   const [selectedPig, setSelectedPig] = useState(null);
   const [medicalHistory, setMedicalHistory] = useState([]);
@@ -12,63 +18,18 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchCurrentFarm());
+  }, [dispatch])
+
+  const selectedFarm = useSelector(currentFarmRecord);
+
+  console.log("Current selected Farm -", selectedFarm)
 
 
-  // const handleSearch = async () => {
-  //   if (!searchId.trim()) {
-  //     toast.error('Please enter a Pig ID');
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   setError(null);
-  //   setSelectedPig(null);
-  //   setMedicalHistory([]);
-  //   setStageHistory([]);
-
-  //   try {
-  //     // Fetch all three data sources simultaneously
-  //     const [pigDetailsResult, medicalResult, stageResult] = await Promise.allSettled([
-  //       getPigDetailsByPigId(searchId.trim()),
-  //       getPigMedicalHistoryByPigId(searchId.trim()),
-  //       getPigStageHistoryByPigId(searchId.trim())
-  //     ]);
-
-  //     // Handle pig details
-  //     if (pigDetailsResult.status === 'fulfilled' && pigDetailsResult.value?.success) {
-  //       setSelectedPig(pigDetailsResult.value.data);
-  //       toast.success(`Pig ${searchId} found successfully!`);
-  //     } else {
-  //       toast.error(`Pig ${searchId} not found`);
-  //       setError('Pig not found in database');
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     // Handle medical history
-  //     if (medicalResult.status === 'fulfilled' && medicalResult.value) {
-  //       setMedicalHistory(Array.isArray(medicalResult.value) ? medicalResult.value : []);
-  //     } else {
-  //       console.warn('Medical history not available for pig:', searchId);
-  //       setMedicalHistory([]);
-  //     }
-
-  //     // Handle stage history
-  //     if (stageResult.status === 'fulfilled' && stageResult.value) {
-  //       setStageHistory(Array.isArray(stageResult.value) ? stageResult.value : []);
-  //     } else {
-  //       console.warn('Stage history not available for pig:', searchId);
-  //       setStageHistory([]);
-  //     }
-
-  //   } catch (error) {
-  //     console.error('Dashboard search error:', error);
-  //     toast.error('An error occurred while fetching pig data');
-  //     setError('Failed to fetch pig data');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleSearch = async () => {
     if (!searchId.trim()) {
       toast.error('Please enter a Pig ID');
@@ -229,6 +190,30 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+
+          <button
+            onClick={() => setIsFarmModalOpen(true)}
+            className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
+          >
+            Farm Management
+          </button>
+
+          <FarmModal
+            isOpen={isFarmModalOpen}
+            onClose={() => setIsFarmModalOpen(false)}
+          />
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
+          >
+            Open Data Entry
+          </button>
+
+          {/* Modal */}
+          <DataEntry isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+
+          {/* Toasts */}
+          <Toaster position="top-right" />
 
           {/* Error State */}
           {error && !loading && (

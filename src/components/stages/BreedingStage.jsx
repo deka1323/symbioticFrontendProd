@@ -2,20 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Heart, Plus, Calendar, History, Edit, X } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
+import AdvancedTable from '../common/AdvancedTable';
 import {
-    updateBreedingRecord
-} from '../../actions/breedingActions';
+    fetchCurrentBreedingRecords,
+    fetchBreedingHistoryByMonth,
+    createBreedingRecord,
+    updateBreedingRecord,
+    moveToGestation,
+    fetchCurrentFarm
+} from '../../store/actions/pigActions';
 import {
     selectCurrentBreedingRecords,
     selectBreedingHistory,
     selectIsMovingPig,
     selectMovingPigId,
-    selectIsLoading
+    selectIsLoading,
+    currentFarmRecord
 } from '../../store/selectors/pigSelectors';
-import AdvancedTable from '../common/AdvancedTable';
-import { createBreedingRecord } from '../../actions/breedingActions';
-import { moveBreedingToGestation } from '../../actions/breedingActions';
-import { getBreedingRecords } from '../../actions/breedingActions';
 
 const BreedingStage = () => {
     const dispatch = useDispatch();
@@ -25,17 +28,13 @@ const BreedingStage = () => {
     const [sowId, setSowId] = useState('');
     const [boarId, setBoarId] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('current');
+    // const [selectedFarm, setSelectedFarm] = useState("F1")
 
-    // Month filter for history
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
     const [editForm, setEditForm] = useState({
         matingDate: '',
-        sowBreed: '',
-        boarBreed: '',
-        sowAge: '',
-        boarAge: '',
         notes: ''
     });
 
@@ -44,24 +43,35 @@ const BreedingStage = () => {
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
 
-    // Redux selectors
+    useEffect(() => {
+        dispatch(fetchCurrentFarm());
+    }, [dispatch])
+
+    const selectedFarm = useSelector(currentFarmRecord);
+
+    console.log("Current selected Farm -", selectedFarm)
+
     const currentBreeding = useSelector(selectCurrentBreedingRecords);
     const breedingHistory = useSelector(selectBreedingHistory);
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
     const isLoading = useSelector(selectIsLoading);
 
-    // Filter history records by month
-    const filteredHistoryRecords = breedingHistory.filter(record => {
+    const filteredHistoryRecords = breedingHistory?.filter(record => {
         if (!record.outDate) return false;
         const recordDate = new Date(record.outDate);
         return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
     });
 
     useEffect(() => {
-        // Fetch breeding records on component mount
-        dispatch(getBreedingRecords());
-    }, [dispatch]);
+        if (selectedFilter === 'current') {
+            dispatch(fetchCurrentBreedingRecords(selectedFarm));
+        } else {
+            dispatch(fetchBreedingHistoryByMonth(selectedYear, selectedMonth + 1, selectedFarm));
+        }
+        console.log("month :", selectedMonth)
+        console.log("Year :", selectedYear)
+    }, [dispatch, selectedFilter, selectedMonth, selectedYear]);
 
     const handleNewBreeding = async () => {
         if (!sowId || !boarId) {
@@ -72,20 +82,17 @@ const BreedingStage = () => {
         const newRecord = {
             sowId,
             boarId,
-            sowBreed: 'Yorkshire',
-            boarBreed: 'Duroc',
-            sowAge: 18,
-            boarAge: 24
+            selectedFarm
         };
 
-        try {
-            await dispatch(createBreedingRecord(newRecord));
-            toast.success('New breeding record created successfully!');
+        const result = await dispatch(createBreedingRecord(newRecord));
+        if (result.success) {
+            toast.success('New service record created successfully!');
             setShowNewBreeding(false);
             setSowId('');
             setBoarId('');
-        } catch (error) {
-            toast.error('Failed to create breeding record');
+        } else {
+            toast.error('Failed to create service record');
         }
     };
 
@@ -93,67 +100,68 @@ const BreedingStage = () => {
         setEditingRecord(record);
         setEditForm({
             matingDate: record.matingDate || '',
-            sowBreed: record.sowBreed || '',
-            boarBreed: record.boarBreed || '',
-            sowAge: record.sowAge || '',
-            boarAge: record.boarAge || '',
             notes: record.notes || ''
         });
         setShowEditModal(true);
     };
 
     const handleSaveEdit = async () => {
-        try {
-            const updatedRecord = {
-                ...editingRecord,
-                ...editForm,
-                sowAge: parseInt(editForm.sowAge) || editingRecord.sowAge,
-                boarAge: parseInt(editForm.boarAge) || editingRecord.boarAge
-            };
+        // const updatedRecord = {
+        //     ...editingRecord,
+        //     ...editForm,
+        // };
+        const updatedRecord = {
+            Entity: editingRecord.Entity,
+            Type: editingRecord.Type,
+            sowId: editingRecord.pigId,
+            breedingId: editingRecord.recordId,
+            ...editForm,
+            selectedFarm
+        };
 
-            await dispatch(updateBreedingRecord(updatedRecord));
-            toast.success('Breeding record updated successfully!');
+        const result = await dispatch(updateBreedingRecord(updatedRecord));
+        console.log("result from update :", result)
+        if (result.success) {
+            toast.success('Service record updated successfully!');
             setShowEditModal(false);
             setEditingRecord(null);
-        } catch (error) {
-            toast.error('Failed to update breeding record');
+        } else {
+            toast.error('Failed to update Service record');
         }
     };
 
     const handleMoveToGestation = async (action, item) => {
         const loadingToast = toast.loading(`Moving ${item.sowId} to Gestation stage...`);
+        const payload = { ...item, selectedFarm }
+        console.log("payload ->", payload)
+        const result = await dispatch(moveToGestation(payload));
 
-        try {
-            const result = await dispatch(moveBreedingToGestation(item.id));
-
-            if (result.success) {
-                toast.success(`${item.sowId} successfully moved to ${result.targetStage} stage!`, {
-                    id: loadingToast,
-                    duration: 3000,
-                });
-            } else {
-                toast.error('Failed to move pig to gestation stage', {
-                    id: loadingToast,
-                });
-            }
-        } catch (error) {
-            toast.error('An error occurred while moving the pig', {
+        if (result.success) {
+            toast.success(`${item.sowId} successfully moved to ${result.targetStage} stage!`, {
                 id: loadingToast,
+                duration: 3000,
             });
+        } else {
+            toast.error('Failed to move pig to gestation stage', { id: loadingToast });
         }
     };
 
+
     // Current breeding table columns
     const currentBreedingColumns = [
-        { key: 'id', label: 'Breeding ID', sortable: true },
         {
-            key: 'sowId',
-            label: 'Sow Details',
+            key: 'recordId',
+            label: 'Service ID',
+            sortable: true
+        },
+        {
+            key: 'pigId',
+            label: 'Sow ID',
             sortable: true,
             render: (value, item) => (
                 <div>
                     <div className="text-sm text-gray-900">{value}</div>
-                    <div className="text-sm text-gray-500">{item.sowBreed} • {item.sowAge} months</div>
+                    <div className="text-sm text-gray-500">{item.stageSpecificData?.sowBreed || '-'}</div>
                 </div>
             )
         },
@@ -161,28 +169,38 @@ const BreedingStage = () => {
             key: 'boarId',
             label: 'Boar Details',
             sortable: true,
-            render: (value, item) => (
+            render: (_, item) => (
                 <div>
-                    <div className="text-sm text-gray-900">{value}</div>
-                    <div className="text-sm text-gray-500">{item.boarBreed} • {item.boarAge} months</div>
+                    <div className="text-sm text-gray-900">{item.stageSpecificData?.boarId || '-'}</div>
+                    <div className="text-sm text-gray-500">{item.stageSpecificData?.boarBreed || '-'}</div>
                 </div>
             )
         },
-        { key: 'matingDate', label: 'Mating Date', sortable: true },
-        { key: 'inDate', label: 'In Date', sortable: true },
+        {
+            key: 'matingDate',
+            label: 'Service Date',
+            sortable: true,
+            render: (_, item) => item.stageSpecificData?.matingDate || '-'
+        },
+        {
+            key: 'inDate',
+            label: 'In Date',
+            sortable: true
+        }
     ];
+
 
     // History breeding table columns
     const historyBreedingColumns = [
-        { key: 'id', label: 'Breeding ID', sortable: true },
+        { key: 'recordId', label: 'Service ID', sortable: true },
         {
-            key: 'sowId',
+            key: 'pigId',
             label: 'Sow Details',
             sortable: true,
             render: (value, item) => (
                 <div>
                     <div className="text-sm text-gray-900">{value}</div>
-                    <div className="text-sm text-gray-500">{item.sowBreed} • {item.sowAge} months</div>
+                    <div className="text-sm text-gray-500">{item.stageSpecificData?.sowBreed || '-'}</div>
                 </div>
             )
         },
@@ -192,8 +210,8 @@ const BreedingStage = () => {
             sortable: true,
             render: (value, item) => (
                 <div>
-                    <div className="text-sm text-gray-900">{value}</div>
-                    <div className="text-sm text-gray-500">{item.boarBreed} • {item.boarAge} months</div>
+                    <div className="text-sm text-gray-900">{item.stageSpecificData?.boarId || '-'}</div>
+                    <div className="text-sm text-gray-500">{item.stageSpecificData?.boarBreed || '-'}</div>
                 </div>
             )
         },
@@ -250,6 +268,7 @@ const BreedingStage = () => {
         if (action.key === 'edit') {
             handleEditRecord(item);
         } else if (action.key === 'move') {
+            console.log("item moving-> ", item);
             handleMoveToGestation(action, item);
         }
     };
@@ -280,10 +299,10 @@ const BreedingStage = () => {
                         <div>
                             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
                                 <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-pink-600 mr-2 sm:mr-3" />
-                                Breeding Management
+                                Service Management
                             </h1>
                             <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                                Manage pig breeding records and track mating activities
+                                Manage pig service records and track mating activities
                             </p>
                         </div>
                         <button
@@ -291,14 +310,14 @@ const BreedingStage = () => {
                             className="bg-pink-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-pink-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                         >
                             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-                            <span className="text-sm sm:text-base">New Breeding</span>
+                            <span className="text-sm sm:text-base">New Service</span>
                         </button>
                     </div>
 
                     {/* New Breeding Form */}
                     {showNewBreeding && (
                         <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 border border-gray-100">
-                            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Create New Breeding Record</h2>
+                            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Create New Service Record</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -337,7 +356,7 @@ const BreedingStage = () => {
                                     disabled={isLoading}
                                     className="px-6 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors duration-200 disabled:opacity-50"
                                 >
-                                    {isLoading ? 'Creating...' : 'Create Breeding Record'}
+                                    {isLoading ? 'Creating...' : 'Create Service Record'}
                                 </button>
                             </div>
                         </div>
@@ -355,7 +374,8 @@ const BreedingStage = () => {
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
-                                    Current Breeding ({currentBreeding.length})
+                                    Current Service
+                                    {selectedFilter === 'current' && ` (${currentBreeding.length})`}
                                 </button>
                                 <button
                                     onClick={() => setSelectedFilter('history')}
@@ -365,7 +385,8 @@ const BreedingStage = () => {
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
-                                    Breeding History ({breedingHistory.length})
+                                    Service History
+                                    {selectedFilter === 'history' && ` (${filteredHistoryRecords.length})`}
                                 </button>
                             </nav>
                         </div>
@@ -373,15 +394,16 @@ const BreedingStage = () => {
                         <div className="p-4 sm:p-6">
                             {selectedFilter === 'current' && (
                                 <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Breeding Records</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Service Records</h3>
                                     <p className="text-sm text-gray-600 mb-4">
-                                        Click Edit to modify breeding details including mating date
+                                        Click Edit to modify service details including mating date
                                     </p>
                                     <AdvancedTable
                                         data={currentBreeding}
                                         columns={currentBreedingColumns}
                                         searchPlaceholder="Search by Pig ID..."
-                                        searchKey="sowId"
+                                        // searchKey="sowId"
+                                        searchKey="pigId"
                                         actionButtons={currentBreedingActions}
                                         onAction={handleAction}
                                     />
@@ -390,7 +412,7 @@ const BreedingStage = () => {
 
                             {selectedFilter === 'history' && (
                                 <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Breeding History</h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Service History</h3>
                                     {/* Month Selection for History */}
                                     <div className="mb-4 flex items-center space-x-4">
                                         <span className="text-sm font-medium text-gray-700">Filter by month:</span>
@@ -417,7 +439,7 @@ const BreedingStage = () => {
                                         data={filteredHistoryRecords}
                                         columns={historyBreedingColumns}
                                         searchPlaceholder="Search by Pig ID..."
-                                        searchKey="sowId"
+                                        searchKey="pigId"
                                         actionButtons={historyBreedingActions}
                                         onAction={() => { }}
                                     />
@@ -434,7 +456,7 @@ const BreedingStage = () => {
                     <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-xl font-semibold text-gray-900">
-                                Edit Breeding Details - {editingRecord?.sowId}
+                                Edit Service Details - {editingRecord?.sowId}
                             </h3>
                             <button
                                 onClick={() => setShowEditModal(false)}
@@ -447,74 +469,12 @@ const BreedingStage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Mating Date *
+                                    Service Date *
                                 </label>
                                 <input
                                     type="date"
                                     value={editForm.matingDate}
                                     onChange={(e) => setEditForm({ ...editForm, matingDate: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Sow Breed
-                                </label>
-                                <select
-                                    value={editForm.sowBreed}
-                                    onChange={(e) => setEditForm({ ...editForm, sowBreed: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                >
-                                    <option value="">Select Breed</option>
-                                    <option value="Yorkshire">Yorkshire</option>
-                                    <option value="Landrace">Landrace</option>
-                                    <option value="Duroc">Duroc</option>
-                                    <option value="Hampshire">Hampshire</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Boar Breed
-                                </label>
-                                <select
-                                    value={editForm.boarBreed}
-                                    onChange={(e) => setEditForm({ ...editForm, boarBreed: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                >
-                                    <option value="">Select Breed</option>
-                                    <option value="Yorkshire">Yorkshire</option>
-                                    <option value="Landrace">Landrace</option>
-                                    <option value="Duroc">Duroc</option>
-                                    <option value="Hampshire">Hampshire</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Sow Age (months)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="6"
-                                    max="120"
-                                    value={editForm.sowAge}
-                                    onChange={(e) => setEditForm({ ...editForm, sowAge: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Boar Age (months)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="6"
-                                    max="120"
-                                    value={editForm.boarAge}
-                                    onChange={(e) => setEditForm({ ...editForm, boarAge: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
                                 />
                             </div>

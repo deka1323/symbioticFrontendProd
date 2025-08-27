@@ -6,7 +6,7 @@ const AdvancedTable = ({
     data,
     columns,
     searchPlaceholder = "Search by Pig ID...",
-    searchKey = null, // Specific key to search by
+    searchKey,
     onAction,
     actionButtons = [],
     onRowClick = null,
@@ -20,8 +20,10 @@ const AdvancedTable = ({
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [pendingAction, setPendingAction] = useState(null);
 
+
     // Search functionality
     const filteredData = useMemo(() => {
+        console.log("data ->", data)
         if (!searchTerm) return data;
 
         const filtered = data.filter(item => {
@@ -279,8 +281,8 @@ const AdvancedTable = ({
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
                                         className={`px-3 py-1 border rounded-md text-sm ${currentPage === pageNum
-                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                : 'border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-blue-600 text-white border-blue-600'
+                                            : 'border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         {pageNum}
