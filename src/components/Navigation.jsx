@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Pi as Pig, Users, Heart, Baby, Sprout, TrendingUp, FileText, Home, LogOut, User, Menu, X, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import logo from '../assets/symbioticLogo.png'
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -12,7 +13,7 @@ const Navigation = () => {
   const navItems = [
     { id: '/', label: 'Dashboard', icon: Home },
     { id: '/sales', label: 'Sales', icon: ShoppingCart },
-    { id: '/breeding', label: 'Breeding', icon: Heart },
+    { id: '/breeding', label: 'Servicing', icon: Heart },
     { id: '/gestation', label: 'Gestation', icon: Users },
     { id: '/farrowing', label: 'Farrowing', icon: Baby },
     { id: '/nursery', label: 'Nursery', icon: Sprout },
@@ -35,9 +36,9 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
-              <Pig className="h-8 w-8 text-emerald-600" />
-              <span className="ml-2 text-base sm:text-lg font-bold text-gray-900 hidden xs:block">FarmTracker Pro</span>
-              <span className="ml-2 text-sm font-bold text-gray-900 xs:hidden">FTP</span>
+              <img src={logo} alt="Symbiotic Logo" className="h-8 w-8 object-contain" />
+              <span className="ml-2 text-base sm:text-lg font-bold text-gray-900 hidden xs:block">Symbiotic</span>
+              <span className="ml-2 text-sm font-bold text-gray-900 xs:hidden">Symbiotic</span>
             </div>
           </div>
 
@@ -52,8 +53,8 @@ const Navigation = () => {
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
                     className={`inline-flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isActive
-                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                      ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                      : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
                     <Icon className="h-3 w-3 mr-1" />
@@ -117,8 +118,8 @@ const Navigation = () => {
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
                     className={`flex items-center w-full px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${isActive
-                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                      ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                      : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
                     <Icon className="h-5 w-5 mr-3" />

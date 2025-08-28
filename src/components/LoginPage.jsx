@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, Pi as Pig, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import logo from '../assets/symbioticLogo.png'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -47,14 +48,14 @@ const LoginPage = () => {
         <div className="text-center">
           <div className="flex justify-center items-center mb-6">
             <div className="bg-emerald-600 p-3 rounded-full shadow-lg">
-              <Pig className="h-8 w-8 text-white" />
+              <img src={logo} alt="Symbiotic Logo" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h2>
           <p className="text-gray-600">
-            Sign in to your FarmTracker Pro account
+            Sign in Please
           </p>
         </div>
 

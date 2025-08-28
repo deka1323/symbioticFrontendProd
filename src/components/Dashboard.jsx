@@ -155,22 +155,27 @@ const Dashboard = () => {
 
           {/* Search Section */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-8 border border-gray-100">
+            <label
+              htmlFor="pigId"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Search Pig by ID
+            </label>
+
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <div className="flex-1">
-                <label htmlFor="pigId" className="block text-sm font-medium text-gray-700 mb-2">
-                  Search Pig by ID
-                </label>
-                <input
-                  type="text"
-                  id="pigId"
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Enter Pig ID (e.g., PIG001)"
-                  disabled={loading}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                />
-              </div>
+              {/* Input */}
+              <input
+                type="text"
+                id="pigId"
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter Pig ID (e.g., PIG001)"
+                disabled={loading}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+
+              {/* Button */}
               <button
                 onClick={handleSearch}
                 disabled={loading}
@@ -191,26 +196,30 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsFarmModalOpen(true)}
-            className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-          >
-            Farm Management
-          </button>
 
-          <FarmModal
-            isOpen={isFarmModalOpen}
-            onClose={() => setIsFarmModalOpen(false)}
-          />
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
-          >
-            Open Data Entry
-          </button>
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setIsFarmModalOpen(true)}
+              className="px-5 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            >
+              Farm Management
+            </button>
 
-          {/* Modal */}
-          <DataEntry isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+            <FarmModal
+              isOpen={isFarmModalOpen}
+              onClose={() => setIsFarmModalOpen(false)}
+            />
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
+            >
+              Open Data Entry
+            </button>
+
+            <DataEntry isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+          </div>
+
 
           {/* Toasts */}
           <Toaster position="top-right" />
