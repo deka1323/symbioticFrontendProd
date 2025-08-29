@@ -46,3 +46,35 @@ export const entryBreedingRecord = async (breedingData) => {
     return { success: false, data: err.message };
   }
 };
+
+export const entryGestationRecord = async (gestationData) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const response = await fetch(`${API_BASE_URL}/dataEntry/gestation`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(gestationData),
+    });
+
+    console.log("response :", response.json());
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.log("Create Gestation record error -> ", errorBody);
+      return {
+        success: false,
+        data: errorBody.message || "Failed to create Gestation record",
+      };
+    }
+
+    const data = await response.json();
+    console.log("Create Gestation record data -> ", data);
+    return { success: true, data: data.data };
+  } catch (err) {
+    return { success: false, data: err.message };
+  }
+};

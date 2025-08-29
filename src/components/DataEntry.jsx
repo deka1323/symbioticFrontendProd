@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { entryBreedingRecord } from "../actions/dataEntryActions";
+import { entryBreedingRecord, entryGestationRecord } from "../actions/dataEntryActions";
 
 // Configuration for stage-specific fields
 const stageConfigs = {
-    breeding: [
+    servicing: [
         { name: "sowId", label: "Sow ID", type: "text" },
         { name: "boarId", label: "Boar ID", type: "text" },
         { name: "matingDate", label: "Service Date", type: "date" },
@@ -14,8 +14,12 @@ const stageConfigs = {
         { name: "sowBreed", label: "Sow Breed", type: "text" },
     ],
     gestation: [
-        { name: "daysPregnant", label: "Days Pregnant", type: "number" },
-        { name: "expectedDate", label: "Expected Date", type: "date" },
+        { name: "sowId", label: "Sow ID", type: "text" },
+        { name: "boarId", label: "Boar ID", type: "text" },
+        { name: "boarBreed", label: "Boar Breed", type: "text" },
+        { name: "sowBreed", label: "Sow Breed", type: "text" },
+        { name: "inDate", label: "In Date", type: "date" },
+        { name: "notes", label: "Notes", type: "text" }
     ],
     farrowing: [
         { name: "pigletsBorn", label: "Piglets Born", type: "number" },
@@ -38,27 +42,50 @@ const DataEntry = ({ isOpen, onClose }) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
+    // Map stage -> API function
+    const stageHandlers = {
+        servicing: entryBreedingRecord,
+        gestation: entryGestationRecord,
+        // farrowing: entryFarrowingRecord,
+        // nursery: entryNurseryRecord,   // add when available
+        // fattening: entryFatteningRecord,
+        // dried: entryDriedRecord,
+        // "in-house": entryInHouseRecord,
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         if (!stage) {
             toast.error("Please select a stage before submitting");
             return;
         }
+
+        const handler = stageHandlers[stage];
+        if (!handler) {
+            toast.error(`No handler implemented for stage: ${stage}`);
+            return;
+        }
+
         try {
-            console.log("formData ->", formData)
-            const data = await entryBreedingRecord(formData);
+            console.log("Submitting:", stage, formData);
+            const data = await handler(formData);
+
             if (!data.success) {
-                toast.error("Error Submitting Data !");
+                toast.error("Error Submitting Data!");
                 return;
             }
+
             toast.success("Data submitted successfully!");
             setFormData({});
             setStage("");
             onClose();
         } catch (err) {
+            console.error(err);
             toast.error("Failed to submit data, please try again.");
         }
     };
+
 
     if (!isOpen) return null;
 
