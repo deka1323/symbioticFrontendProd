@@ -18,7 +18,7 @@ const Reports = () => {
   const reportTypes = [
     { id: 'vaccination', name: 'Upcoming Vaccinations', icon: Syringe, color: 'green' },
     { id: 'delivery', name: 'Expected Deliveries', icon: Baby, color: 'pink' },
-    { id: 'population', name: 'Pig Population Report', icon: BarChart3, color: 'blue' },
+    // { id: 'population', name: 'Pig Population Report', icon: BarChart3, color: 'blue' },
     { id: 'stages', name: 'Stage Distribution', icon: TrendingUp, color: 'purple' },
     { id: 'sold', name: 'Sales Report', icon: FileText, color: 'orange' },
   ];
@@ -237,8 +237,8 @@ const Reports = () => {
         label: 'Priority',
         render: (value) => (
           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value === 'Urgent' ? 'bg-red-100 text-red-800' :
-              value === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-green-100 text-green-800'
+            value === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-green-100 text-green-800'
             }`}>
             {value}
           </span>
@@ -296,8 +296,8 @@ const Reports = () => {
         sortable: true,
         render: (value) => (
           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value <= 7 ? 'bg-red-100 text-red-800' :
-              value <= 14 ? 'bg-yellow-100 text-yellow-800' :
-                'bg-green-100 text-green-800'
+            value <= 14 ? 'bg-yellow-100 text-yellow-800' :
+              'bg-green-100 text-green-800'
             }`}>
             {value} days
           </span>
@@ -630,8 +630,8 @@ const Reports = () => {
                       key={report.id}
                       onClick={() => setSelectedReport(report.id)}
                       className={`flex-shrink-0 py-3 sm:py-4 px-4 sm:px-6 border-b-2 font-medium text-xs sm:text-sm flex items-center transition-colors duration-200 ${selectedReport === report.id
-                          ? `border-${report.color}-500 text-${report.color}-600`
-                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? `border-${report.color}-500 text-${report.color}-600`
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                         }`}
                     >
                       <Icon className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -647,7 +647,7 @@ const Reports = () => {
           <div>
             {selectedReport === 'vaccination' && renderVaccinationReport()}
             {selectedReport === 'delivery' && renderDeliveryReport()}
-            {selectedReport === 'population' && renderPopulationReport()}
+            {/* {selectedReport === 'population' && renderPopulationReport()} */}
             {selectedReport === 'stages' && renderStageReport()}
             {selectedReport === 'sold' && renderSalesReport()}
           </div>

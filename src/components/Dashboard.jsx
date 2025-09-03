@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { currentFarmRecord } from '../store/selectors/pigSelectors';
 import { fetchCurrentFarm } from '../store/actions/pigActions';
 import DataEntry from './DataEntry';
+import PopulationReport from './Report/PopulationReport';
 
 
 const Dashboard = () => {
@@ -218,6 +219,10 @@ const Dashboard = () => {
             </button>
 
             <DataEntry isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+          </div>
+
+          <div>
+            <PopulationReport />
           </div>
 
 
