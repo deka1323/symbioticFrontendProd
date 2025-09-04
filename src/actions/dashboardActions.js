@@ -14,14 +14,14 @@ const buildQueryString = (params) => {
   return searchParams.toString();
 };
 
-export const getPigDetailsByPigId = async (pigId) => {
+export const getPigDetailsByPigId = async (selectedFarm, pigId) => {
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
     // console.log(pigId);
 
     const response = await fetch(
-      `https://a965c4z4db.execute-api.ap-south-1.amazonaws.com/beta/getPigDetailsByPigId/${pigId} `,
+      `${API_BASE_URL}/getPigDetailsByPigId/${pigId}/${selectedFarm}`,
       {
         method: "GET",
         headers: {
@@ -33,6 +33,7 @@ export const getPigDetailsByPigId = async (pigId) => {
 
     if (!response.ok) {
       const errorBody = await response.json();
+      console.log("errorBody ->", errorBody);
       return {
         success: false,
         data: errorBody.message || "Failed to fetch pig data",
@@ -40,20 +41,20 @@ export const getPigDetailsByPigId = async (pigId) => {
     }
 
     const data = await response.json();
-    console.log("data ->", data);
+    console.log("data -------------->", data);
     return { success: true, data };
   } catch (err) {
     return { success: false, data: err.message };
   }
 };
 
-export const getPigStageHistoryByPigId = async (pigId) => {
+export const getPigStageHistoryByPigId = async (selectedFarm, pigId) => {
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
 
     const response = await fetch(
-      `https://a965c4z4db.execute-api.ap-south-1.amazonaws.com/beta/getPigStageHistoryById/${pigId}`,
+      `https://a965c4z4db.execute-api.ap-south-1.amazonaws.com/beta/getPigStageHistoryById/${pigId}/${selectedFarm}`,
       {
         method: "GET",
         headers: {
@@ -80,13 +81,13 @@ export const getPigStageHistoryByPigId = async (pigId) => {
   }
 };
 
-export const getPigMedicalHistoryByPigId = async (pigId) => {
+export const getPigMedicalHistoryByPigId = async (selectedFarm, pigId) => {
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
 
     const response = await fetch(
-      `https://a965c4z4db.execute-api.ap-south-1.amazonaws.com/beta/getPigMedicalHistoryById/${pigId}`,
+      `https://a965c4z4db.execute-api.ap-south-1.amazonaws.com/beta/getPigMedicalHistoryById/${pigId}/${selectedFarm}`,
       {
         method: "GET",
         headers: {

@@ -1,23 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { Pi as Pig, Users, Heart, Baby, Sprout, TrendingUp, FileText, Home, LogOut, User, Menu, X, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import logo from '../assets/symbioticLogo.png'
+import { fetchCurrentFarm } from '../store/actions/pigActions';
+import { currentFarmRecord } from '../store/selectors/pigSelectors';
 
 const Navigation = () => {
+  const dispatch = useDispatch();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    dispatch(fetchCurrentFarm());
+  }, [dispatch]);
+
+  const selectedFarm = useSelector(currentFarmRecord);
+
   const navItems = [
     { id: '/', label: 'Dashboard', icon: Home },
     { id: '/sales', label: 'Sales', icon: ShoppingCart },
-    { id: '/breeding', label: 'Servicing', icon: Heart },
+    { id: '/breeding', label: 'Service', icon: Heart },
     { id: '/gestation', label: 'Gestation', icon: Users },
     { id: '/farrowing', label: 'Farrowing', icon: Baby },
     { id: '/nursery', label: 'Nursery', icon: Sprout },
     { id: '/fattening', label: 'Fattening', icon: TrendingUp },
+    { id: '/dried', label: 'Dried', icon: TrendingUp },
     { id: '/reports', label: 'Reports', icon: FileText },
   ];
 
@@ -34,6 +45,7 @@ const Navigation = () => {
     <nav className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          {/* Logo Section */}
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center">
               <img src={logo} alt="Symbiotic Logo" className="h-8 w-8 object-contain" />
@@ -42,8 +54,8 @@ const Navigation = () => {
             </div>
           </div>
 
+          {/* Desktop Navigation */}
           <div className="hidden xl:flex items-center space-x-1">
-            {/* Navigation Items */}
             <div className="flex space-x-0.5">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -53,8 +65,8 @@ const Navigation = () => {
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
                     className={`inline-flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isActive
-                      ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                      : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
                     <Icon className="h-3 w-3 mr-1" />
@@ -64,16 +76,21 @@ const Navigation = () => {
               })}
             </div>
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-2 ml-2 pl-2 border-l border-gray-200">
+            {/* User + Farm Badge */}
+            <div className="flex items-center space-x-3 ml-2 pl-2 border-l border-gray-200">
               <div className="hidden 2xl:flex items-center space-x-1">
-                <div className="flex items-center space-x-1">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="text-xs text-gray-700 max-w-20 truncate">
-                    {user?.signInDetails?.loginId || 'User'}
-                  </span>
-                </div>
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="text-xs text-gray-700 max-w-20 truncate">
+                  {user?.signInDetails?.loginId || 'User'}
+                </span>
               </div>
+
+              {/* Farm Badge */}
+              {selectedFarm && (
+                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-sm">
+                  {selectedFarm}
+                </div>
+              )}
 
               <button
                 onClick={handleLogout}
@@ -85,7 +102,7 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Mobile Navigation Button */}
+          {/* Mobile Menu Toggle */}
           <div className="xl:hidden flex items-center space-x-2">
             <div className="flex items-center space-x-1">
               <User className="h-4 w-4 text-gray-500" />
@@ -93,6 +110,14 @@ const Navigation = () => {
                 {user?.signInDetails?.loginId?.split('@')[0] || 'User'}
               </span>
             </div>
+
+            {/* Farm Badge for Mobile */}
+            {selectedFarm && (
+              <div className="flex items-center justify-center h-7 w-7 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-sm">
+                {selectedFarm}
+              </div>
+            )}
+
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 transition-colors duration-200"
@@ -106,7 +131,7 @@ const Navigation = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="xl:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
@@ -118,8 +143,8 @@ const Navigation = () => {
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
                     className={`flex items-center w-full px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${isActive
-                      ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                      : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
                     <Icon className="h-5 w-5 mr-3" />

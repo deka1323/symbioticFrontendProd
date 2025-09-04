@@ -102,6 +102,8 @@ export const getCurrentBreedingRecords = async (
       }
     );
 
+    console.log("response --->", response);
+
     if (!response.ok) {
       const errorBody = await response.json();
       console.log("active error -> ", errorBody);

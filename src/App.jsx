@@ -12,6 +12,7 @@ import NurseryStage from './components/stages/NurseryStage';
 import FatteningStage from './components/stages/FatteningStage';
 import Reports from './components/Reports';
 import './config/aws-config';
+import DriedStage from './components/stages/DriedStage';
 
 function App() {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ function App() {
                     <Route path="/farrowing" element={<FarrowingStage />} />
                     <Route path="/nursery" element={<NurseryStage />} />
                     <Route path="/fattening" element={<FatteningStage />} />
+                    <Route path="/dried" element={<DriedStage />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

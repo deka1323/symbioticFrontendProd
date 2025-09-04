@@ -12,6 +12,7 @@
   "dependencies": {
     "aws-amplify": "^6.15.3",
     "crypto-js": "^4.2.0",
+    "framer-motion": "^12.23.12",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",

@@ -3,6 +3,7 @@ import { FileText, Calendar, TrendingUp, Syringe, Baby, BarChart3, Download, Fil
 import { toast } from 'react-hot-toast';
 import { samplePigs } from '../data/sampleData';
 import AdvancedTable from './common/AdvancedTable';
+import StageDistributionReport from './Report/StageDistributionReport';
 
 const Reports = () => {
   const [selectedReport, setSelectedReport] = useState('vaccination');
@@ -648,7 +649,8 @@ const Reports = () => {
             {selectedReport === 'vaccination' && renderVaccinationReport()}
             {selectedReport === 'delivery' && renderDeliveryReport()}
             {/* {selectedReport === 'population' && renderPopulationReport()} */}
-            {selectedReport === 'stages' && renderStageReport()}
+            {/* {selectedReport === 'stages' && renderStageReport()} */}
+            {selectedReport === 'stages' && <StageDistributionReport />}
             {selectedReport === 'sold' && renderSalesReport()}
           </div>
         </div>

@@ -61,61 +61,63 @@ const FatteningStage = () => {
     };
 
     // Mock data for demonstration
-    const mockCurrentRecords = [
-        {
-            id: 'FT001',
-            pigId: 'PIG101',
-            fatherPigId: 'BOAR003',
-            motherPigId: 'PIG001',
-            breed: 'Yorkshire-Duroc',
-            sex: 'female',
-            weight: 45.5,
-            inDate: '2024-03-01',
-            status: 'active',
-            pregnancyFailed: false
-        },
-        {
-            id: 'FT002',
-            pigId: 'PIG102',
-            fatherPigId: 'BOAR003',
-            motherPigId: 'PIG001',
-            breed: 'Yorkshire-Duroc',
-            sex: 'male',
-            weight: 52.3,
-            inDate: '2024-03-01',
-            status: 'active',
-            pregnancyFailed: false
-        },
-        {
-            id: 'FT003',
-            pigId: 'PIG103',
-            fatherPigId: 'BOAR005',
-            motherPigId: 'PIG025',
-            breed: 'Landrace-Hampshire',
-            sex: 'female',
-            weight: 38.7,
-            inDate: '2024-03-05',
-            status: 'active',
-            pregnancyFailed: true
-        }
-    ];
+    // const mockCurrentRecords = [
+    //     {
+    //         id: 'FT001',
+    //         pigId: 'PIG101',
+    //         fatherPigId: 'BOAR003',
+    //         motherPigId: 'PIG001',
+    //         breed: 'Yorkshire-Duroc',
+    //         sex: 'female',
+    //         weight: 45.5,
+    //         inDate: '2024-03-01',
+    //         status: 'active',
+    //         pregnancyFailed: false
+    //     },
+    //     {
+    //         id: 'FT002',
+    //         pigId: 'PIG102',
+    //         fatherPigId: 'BOAR003',
+    //         motherPigId: 'PIG001',
+    //         breed: 'Yorkshire-Duroc',
+    //         sex: 'male',
+    //         weight: 52.3,
+    //         inDate: '2024-03-01',
+    //         status: 'active',
+    //         pregnancyFailed: false
+    //     },
+    //     {
+    //         id: 'FT003',
+    //         pigId: 'PIG103',
+    //         fatherPigId: 'BOAR005',
+    //         motherPigId: 'PIG025',
+    //         breed: 'Landrace-Hampshire',
+    //         sex: 'female',
+    //         weight: 38.7,
+    //         inDate: '2024-03-05',
+    //         status: 'active',
+    //         pregnancyFailed: true
+    //     }
+    // ];
+    const mockCurrentRecords = [];
+    const mockHistoryRecords = [];
 
-    const mockHistoryRecords = [
-        {
-            id: 'FT004',
-            pigId: 'PIG090',
-            fatherPigId: 'BOAR001',
-            motherPigId: 'PIG010',
-            breed: 'Yorkshire',
-            sex: 'male',
-            weight: 65.2,
-            inDate: '2024-01-15',
-            outDate: '2024-02-20',
-            status: 'sold',
-            outcome: 'Sold to market',
-            pregnancyFailed: false
-        }
-    ];
+    // const mockHistoryRecords = [
+    //     {
+    //         id: 'FT004',
+    //         pigId: 'PIG090',
+    //         fatherPigId: 'BOAR001',
+    //         motherPigId: 'PIG010',
+    //         breed: 'Yorkshire',
+    //         sex: 'male',
+    //         weight: 65.2,
+    //         inDate: '2024-01-15',
+    //         outDate: '2024-02-20',
+    //         status: 'sold',
+    //         outcome: 'Sold to market',
+    //         pregnancyFailed: false
+    //     }
+    // ];
 
     // Filter history records by month
     const filteredHistoryRecords = mockHistoryRecords.filter(record => {
