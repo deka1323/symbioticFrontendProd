@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FileText, Calendar, TrendingUp, Syringe, Baby, BarChart3, Download, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { samplePigs } from '../data/sampleData';
 import AdvancedTable from './common/AdvancedTable';
 import StageDistributionReport from './Report/StageDistributionReport';
+import UpcomingMedicine from './Report/UpcomingMedicine';
+import { currentFarmRecord } from '../store/selectors/pigSelectors';
+import { fetchCurrentFarm } from '../store/actions/pigActions';
+import { useDispatch, useSelector } from "react-redux";
+import ExpectedDeliveryReport from './Report/ExpectedDelieveryReport';
 
 const Reports = () => {
+  const dispatch = useDispatch();
   const [selectedReport, setSelectedReport] = useState('vaccination');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -16,6 +22,11 @@ const Reports = () => {
   const [populationMonth, setPopulationMonth] = useState(new Date().getMonth());
   const [populationYear, setPopulationYear] = useState(new Date().getFullYear());
 
+
+  useEffect(() => {
+    dispatch(fetchCurrentFarm());
+  }, [dispatch]);
+  const selectedFarm = useSelector(currentFarmRecord);
   const reportTypes = [
     { id: 'vaccination', name: 'Upcoming Vaccinations', icon: Syringe, color: 'green' },
     { id: 'delivery', name: 'Expected Deliveries', icon: Baby, color: 'pink' },
@@ -28,6 +39,8 @@ const Reports = () => {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  console.log("selectedYear + selectedMonth ->", selectedYear, selectedMonth)
 
   // Generate upcoming vaccinations for selected month with filter
   const getUpcomingVaccinations = () => {
@@ -225,63 +238,6 @@ const Reports = () => {
     }
   };
 
-  const renderVaccinationReport = () => {
-    const data = getUpcomingVaccinations();
-
-    const columns = [
-      { key: 'pigId', label: 'Pig ID', sortable: true },
-      { key: 'vaccineType', label: 'Vaccine Type', sortable: true },
-      { key: 'dueDate', label: 'Due Date', sortable: true },
-      { key: 'daysLeft', label: 'Days Left', sortable: true },
-      {
-        key: 'priority',
-        label: 'Priority',
-        render: (value) => (
-          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value === 'Urgent' ? 'bg-red-100 text-red-800' :
-            value === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-green-100 text-green-800'
-            }`}>
-            {value}
-          </span>
-        )
-      }
-    ];
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-            <Syringe className="h-6 w-6 text-green-600 mr-2" />
-            Upcoming Vaccinations - {months[selectedMonth]} {selectedYear}
-          </h3>
-          <div className="flex space-x-2">
-            <select
-              value={vaccineFilter}
-              onChange={(e) => setVaccineFilter(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="all">All Vaccines</option>
-              <option value="csf">CSF Only</option>
-              <option value="other">Other Vaccines</option>
-            </select>
-            <button
-              onClick={() => downloadCSV(data, 'upcoming-vaccinations')}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200"
-            >
-              <Download className="h-4 w-4" />
-              <span>Download CSV</span>
-            </button>
-          </div>
-        </div>
-        <AdvancedTable
-          data={data}
-          columns={columns}
-          searchPlaceholder="Search by Pig ID..."
-          searchKey="pigId"
-        />
-      </div>
-    );
-  };
 
   const renderDeliveryReport = () => {
     const data = getExpectedDeliveries();
@@ -290,20 +246,8 @@ const Reports = () => {
       { key: 'sowId', label: 'Sow ID', sortable: true },
       { key: 'boarId', label: 'Boar ID', sortable: true },
       { key: 'matingDate', label: 'Mating Date', sortable: true },
+      { key: 'sowBreed', label: 'Sow Breed', sortable: true },
       { key: 'expectedDate', label: 'Expected Delivery', sortable: true },
-      {
-        key: 'daysLeft',
-        label: 'Days Left',
-        sortable: true,
-        render: (value) => (
-          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value <= 7 ? 'bg-red-100 text-red-800' :
-            value <= 14 ? 'bg-yellow-100 text-yellow-800' :
-              'bg-green-100 text-green-800'
-            }`}>
-            {value} days
-          </span>
-        )
-      }
     ];
 
     return (
@@ -331,192 +275,6 @@ const Reports = () => {
     );
   };
 
-  const renderPopulationReport = () => {
-    const stats = getPopulationStats();
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-            <BarChart3 className="h-6 w-6 text-blue-600 mr-2" />
-            Pig Population Report
-          </h3>
-          <div className="flex space-x-2">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">In-house filter:</span>
-              <select
-                value={populationMonth}
-                onChange={(e) => setPopulationMonth(parseInt(e.target.value))}
-                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {months.map((month, index) => (
-                  <option key={index} value={index}>{month}</option>
-                ))}
-              </select>
-              <select
-                value={populationYear}
-                onChange={(e) => setPopulationYear(parseInt(e.target.value))}
-                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {[2023, 2024, 2025].map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-            <button
-              onClick={() => downloadCSV([stats], 'population-report')}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200"
-            >
-              <Download className="h-4 w-4" />
-              <span>Download CSV</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div
-            className="bg-blue-50 rounded-lg p-4 cursor-pointer hover:bg-blue-100 transition-colors duration-200"
-            onClick={() => showDetails('total', 'Total Pigs')}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <BarChart3 className="h-8 w-8 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-blue-600">Total Pigs</div>
-                <div className="text-2xl font-bold text-blue-900">{stats.total}</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="bg-green-50 rounded-lg p-4 cursor-pointer hover:bg-green-100 transition-colors duration-200"
-            onClick={() => showDetails('living', 'Living Pigs')}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-8 w-8 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-green-600">Living</div>
-                <div className="text-2xl font-bold text-green-900">{stats.living}</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="bg-red-50 rounded-lg p-4 cursor-pointer hover:bg-red-100 transition-colors duration-200"
-            onClick={() => showDetails('dead', 'Dead Pigs')}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="h-8 w-8 bg-red-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">×</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-red-600">Dead</div>
-                <div className="text-2xl font-bold text-red-900">{stats.dead}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-purple-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <Calendar className="h-8 w-8 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-purple-600">Survival Rate</div>
-                <div className="text-2xl font-bold text-purple-900">
-                  {((stats.living / stats.total) * 100).toFixed(1)}%
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="bg-orange-50 rounded-lg p-4 cursor-pointer hover:bg-orange-100 transition-colors duration-200"
-            onClick={() => showDetails('sold', 'Sold Pigs')}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FileText className="h-8 w-8 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-orange-600">Sold</div>
-                <div className="text-2xl font-bold text-orange-900">{stats.sold}</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors duration-200"
-            onClick={() => showDetails('inhouse', `In-House (${months[populationMonth]} ${populationYear})`)}
-          >
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <TrendingUp className="h-8 w-8 text-gray-600" />
-              </div>
-              <div className="ml-4">
-                <div className="text-sm font-medium text-gray-600">In-House</div>
-                <div className="text-2xl font-bold text-gray-900">{stats.inhouse}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderStageReport = () => {
-    const data = getStageDistribution();
-
-    const columns = [
-      { key: 'stage', label: 'Stage', sortable: true },
-      { key: 'count', label: 'Count', sortable: true },
-      { key: 'percentage', label: 'Percentage', sortable: true, render: (value) => `${value}%` }
-    ];
-
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-            <TrendingUp className="h-6 w-6 text-purple-600 mr-2" />
-            Stage Distribution Report
-          </h3>
-          <button
-            onClick={() => downloadCSV(data, 'stage-distribution')}
-            className="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200"
-          >
-            <Download className="h-4 w-4" />
-            <span>Download CSV</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-          {data.map((item, index) => (
-            <div
-              key={index}
-              className="bg-purple-50 rounded-lg p-4 cursor-pointer hover:bg-purple-100 transition-colors duration-200"
-              onClick={() => showDetails(item.stage.toLowerCase(), `${item.stage} Stage Pigs`)}
-            >
-              <div className="text-sm font-medium text-purple-600">{item.stage}</div>
-              <div className="text-2xl font-bold text-purple-900">{item.count}</div>
-              <div className="text-xs text-purple-600">{item.percentage}% of living pigs</div>
-            </div>
-          ))}
-        </div>
-
-        <AdvancedTable
-          data={data}
-          columns={columns}
-          searchPlaceholder="Search by stage..."
-          searchKey="stage"
-        />
-      </div>
-    );
-  };
 
   const renderSalesReport = () => {
     const data = getSalesReport();
@@ -646,8 +404,10 @@ const Reports = () => {
 
           {/* Report Content */}
           <div>
-            {selectedReport === 'vaccination' && renderVaccinationReport()}
-            {selectedReport === 'delivery' && renderDeliveryReport()}
+            {/* {selectedReport === 'vaccination' && renderVaccinationReport()} */}
+            {selectedReport === 'vaccination' && <UpcomingMedicine selectedFarm={selectedFarm} selectedMonth={selectedMonth} selectedYear={selectedYear} />}
+            {/* {selectedReport === 'delivery' && renderDeliveryReport()} */}
+            {selectedReport === 'delivery' && <ExpectedDeliveryReport selectedFarm={selectedFarm} selectedMonth={selectedMonth} selectedYear={selectedYear} />}
             {/* {selectedReport === 'population' && renderPopulationReport()} */}
             {/* {selectedReport === 'stages' && renderStageReport()} */}
             {selectedReport === 'stages' && <StageDistributionReport />}
