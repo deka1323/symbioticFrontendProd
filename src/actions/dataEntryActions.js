@@ -20,6 +20,8 @@ export const entryBreedingRecord = async (breedingData) => {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
 
+    console.log("breedingData ---->", breedingData);
+
     const response = await fetch(`${API_BASE_URL}/dataEntry/breeding`, {
       method: "POST",
       headers: {
@@ -29,20 +31,22 @@ export const entryBreedingRecord = async (breedingData) => {
       body: JSON.stringify(breedingData),
     });
 
-    console.log("response :", response.json());
+    // parse JSON once
+    const responseData = await response.json();
+    console.log("Raw response data ->", responseData);
+
     if (!response.ok) {
-      const errorBody = await response.json();
-      console.log("Create Breeding record error -> ", errorBody);
+      console.log("Create Breeding record error -> ", responseData);
       return {
         success: false,
-        data: errorBody.message || "Failed to create breeding record",
+        data: responseData.message || "Failed to create breeding record",
       };
     }
 
-    const data = await response.json();
-    console.log("Create Breeding record data -> ", data);
-    return { success: true, data: data.data };
+    console.log("Create Breeding record data -> ", responseData);
+    return { success: true, data: responseData.data };
   } catch (err) {
+    console.log("error ->", err);
     return { success: false, data: err.message };
   }
 };
@@ -51,6 +55,8 @@ export const entryGestationRecord = async (gestationData) => {
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
+
+    console.log("gestationData ---->", gestationData);
 
     const response = await fetch(`${API_BASE_URL}/dataEntry/gestation`, {
       method: "POST",
@@ -61,20 +67,58 @@ export const entryGestationRecord = async (gestationData) => {
       body: JSON.stringify(gestationData),
     });
 
-    console.log("response :", response.json());
+    // parse JSON once
+    const responseData = await response.json();
+    console.log("Raw response data ->", responseData);
+
     if (!response.ok) {
-      const errorBody = await response.json();
-      console.log("Create Gestation record error -> ", errorBody);
+      console.log("Create gestation record error -> ", responseData);
       return {
         success: false,
-        data: errorBody.message || "Failed to create Gestation record",
+        data: responseData.message || "Failed to gestation record",
       };
     }
 
-    const data = await response.json();
-    console.log("Create Gestation record data -> ", data);
-    return { success: true, data: data.data };
+    console.log("Create gestation record data -> ", responseData);
+    return { success: true, data: responseData.data };
   } catch (err) {
+    console.log("error ->", err);
+    return { success: false, data: err.message };
+  }
+};
+
+export const entryFarrowingRecord = async (farrowingData) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    console.log("farrowingData ---->", farrowingData);
+
+    const response = await fetch(`${API_BASE_URL}/dataEntry/farrowing`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(farrowingData),
+    });
+
+    // parse JSON once
+    const responseData = await response.json();
+    console.log("Raw response data ->", responseData);
+
+    if (!response.ok) {
+      console.log("Create farrowing record error -> ", responseData);
+      return {
+        success: false,
+        data: responseData.message || "Failed to farrowing record",
+      };
+    }
+
+    console.log("Create farrowing record data -> ", responseData);
+    return { success: true, data: responseData.data };
+  } catch (err) {
+    console.log("error ->", err);
     return { success: false, data: err.message };
   }
 };

@@ -50,7 +50,7 @@ export const getPigPopulationReports = async (
     }
 
     const data = await response.json();
-    console.log("active data -> ", data);
+    console.log("active data pig population -> ", data);
     return {
       success: true,
       data: data.data,

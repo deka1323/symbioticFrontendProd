@@ -235,3 +235,71 @@ export const setCurrentfarm = async (selectedFarmId) => {
     return { success: false, data: err.message };
   }
 };
+
+export const updatePigId = async (selectedFarm, oldPigId, newPigId) => {
+  try {
+    const payload = { selectedFarm, oldPigId, newPigId };
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const response = await fetch(`${API_BASE_URL}/updatePigId`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // parse JSON once
+    const responseData = await response.json();
+    console.log("Raw response data ->", responseData);
+
+    if (!response.ok) {
+      console.log("update pigId record error -> ", responseData);
+      return {
+        success: false,
+        data: responseData.message || "Failed to update pigId record",
+      };
+    }
+
+    console.log("update pigId record data -> ", responseData);
+    return { success: true, data: responseData.data };
+  } catch (err) {
+    console.log("error ->", err);
+    return { success: false, data: err.message };
+  }
+};
+
+export const getAllUpdatedPigIds = async () => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const response = await fetch(
+      `https://a965c4z4db.execute-api.ap-south-1.amazonaws.com/beta/getAllUpdatedPigIds`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      }
+    );
+
+    // console.log("response ->", response);
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      return {
+        success: false,
+        data: errorBody.message || "Failed to fetch all updated pig Ids",
+      };
+    }
+
+    const data = await response.json();
+    console.log("updated PigIds ->", data);
+    return { success: true, data: data.data };
+  } catch (error) {
+    return { success: false, data: error.message };
+  }
+};

@@ -127,12 +127,6 @@ const GestationStage = () => {
             render: (_, item) => `${calculateDaysInStage(item.inDate)} days`
         },
         { key: 'breed', label: 'Breed', sortable: true },
-        {
-            key: 'weight',
-            label: 'Weight (kg)',
-            sortable: true,
-            render: (value) => `${value} kg`
-        },
     ];
 
     // History records table columns

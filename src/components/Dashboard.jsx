@@ -1,6 +1,13 @@
-// src/components/Dashboard.jsx
 import React, { useEffect, useState } from "react";
-import { Search, Loader2, AlertCircle, Syringe, CalendarDays, PieChart, FileText } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  Syringe,
+  CalendarDays,
+  PieChart,
+  FileText,
+} from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
@@ -16,6 +23,7 @@ import FarmModal from "./FarmModal";
 import DataEntry from "./DataEntry";
 import PopulationReport from "./Report/PopulationReport";
 import PigProfile from "./PigProfile";
+import ChangePigId from "./ChangePigId";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -32,6 +40,7 @@ const Dashboard = () => {
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showChangePigIdModal, setShowChangePigIdModal] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCurrentFarm());
@@ -82,95 +91,89 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
         {/* Header */}
-        <motion.h1
+        <motion.header
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-4xl font-bold text-gray-900 mb-8"
+          transition={{ duration: 0.5 }}
+          className="border border-gray-200 rounded-md p-4 bg-white"
         >
-          Farm Dashboard
-        </motion.h1>
+          <h1 className="text-2xl font-semibold text-gray-800 tracking-tight">
+            Farm Dashboard
+          </h1>
+        </motion.header>
 
         {/* Search Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="bg-white rounded-2xl shadow-lg p-6 mb-10"
+          transition={{ duration: 0.5 }}
+          className="border border-gray-200 rounded-md p-4 bg-white"
         >
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="pigSearch" className="text-sm font-medium text-gray-700 mb-2 block">
             Search Pig by ID
           </label>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <input
+              id="pigSearch"
               type="text"
               value={searchId}
               onChange={(e) => setSearchId(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Enter Pig ID (e.g., PIG001)"
-              className="flex-1 px-4 py-3 border rounded-xl focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              placeholder="Enter Pig ID"
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
               disabled={loading}
             />
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="px-6 py-3 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 flex items-center gap-2 transition-all duration-200"
+              className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700 flex items-center gap-2"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Searching...
-                </>
-              ) : (
-                <>
-                  <Search className="h-4 w-4" /> Search
-                </>
-              )}
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {loading ? "Searching..." : "Search"}
             </button>
           </div>
-        </motion.div>
+        </motion.section>
 
         {/* Error Banner */}
         {error && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.4 }}
-            className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8 flex items-center"
+            className="border border-red-200 rounded-md p-3 bg-red-50 flex items-center gap-2"
           >
-            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
-            <p className="text-red-800">{error}</p>
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <p className="text-sm text-red-800">{error}</p>
           </motion.div>
         )}
 
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap gap-4 mb-10"
-        >
-          <button
-            onClick={() => setIsFarmModalOpen(true)}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl shadow hover:bg-blue-700 transition-all duration-200"
-          >
-            Farm Management
-          </button>
-          <button
-            onClick={() => setIsDataEntryOpen(true)}
-            className="px-6 py-3 bg-green-600 text-white rounded-xl shadow hover:bg-green-700 transition-all duration-200"
-          >
-            Open Data Entry
-          </button>
-        </motion.div>
-
-        {/* Quick Reports Card Section */}
+        {/* Action Buttons */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+          transition={{ duration: 0.5 }}
+          className="border border-gray-200 rounded-md p-4 bg-white flex flex-wrap gap-2 justify-end"
+        >
+          <button onClick={() => setIsFarmModalOpen(true)} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            Farm Management
+          </button>
+          <button onClick={() => setIsDataEntryOpen(true)} className="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700">
+            Open Data Entry
+          </button>
+          <button onClick={() => setShowChangePigIdModal(true)} className="px-4 py-2 text-sm bg-yellow-500 text-white rounded-md hover:bg-yellow-600">
+            Change Pig ID
+          </button>
+        </motion.div>
+
+        {/* Quick Reports */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="border border-gray-200 rounded-md p-4 bg-white grid grid-cols-2 md:grid-cols-4 gap-4"
         >
           {[
             { title: "Vaccination Details", icon: Syringe },
@@ -180,25 +183,25 @@ const Dashboard = () => {
           ].map((card, idx) => (
             <motion.div
               key={idx}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.97 }}
-              className="cursor-pointer bg-white rounded-2xl shadow-md p-6 flex flex-col items-center justify-center text-center hover:shadow-lg transition-all duration-200"
+              whileHover={{ scale: 1.02 }}
+              className="border border-gray-200 rounded-md p-4 text-center cursor-pointer hover:shadow-sm"
               onClick={() => navigate("/reports")}
             >
-              <card.icon className="h-10 w-10 text-emerald-600 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-800">{card.title}</h3>
+              <card.icon className="h-6 w-6 text-emerald-600 mb-2 mx-auto" />
+              <h3 className="text-sm font-medium text-gray-700">{card.title}</h3>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.section>
 
         {/* Population Report */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="border border-gray-200 rounded-md p-4 bg-white"
         >
           <PopulationReport />
-        </motion.div>
+        </motion.section>
 
         {/* Modals */}
         <FarmModal isOpen={isFarmModalOpen} onClose={() => setIsFarmModalOpen(false)} />
@@ -210,6 +213,12 @@ const Dashboard = () => {
           medicalHistory={medicalHistory}
           stageHistory={stageHistory}
         />
+        {showChangePigIdModal && (
+          <ChangePigId
+            selectedFarm={selectedFarm}
+            onClose={() => setShowChangePigIdModal(false)}
+          />
+        )}
       </div>
     </div>
   );
