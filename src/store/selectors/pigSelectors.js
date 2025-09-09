@@ -1,6 +1,7 @@
 // Selectors for accessing state data
 export const selectBreedingRecords = (state) => state.pig.breedingRecords;
-// export const selectCurrentBreedingRecords = (state) => state.pig.currentBreedingRecords;
+// export const selectCurrentBreedingRecords = (state) =>
+//   state.pig.currentBreedingRecords;
 export const selectCurrentBreedingRecords = (state) =>
   state.pig.breedingRecords.filter((record) => record.status === "active");
 // export const selectBreedingHistory = (state) => state.pig.breedingHistory;

@@ -8,6 +8,10 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdvancedTable from "../common/AdvancedTable";
+import { getAllPigsByStage } from "../../actions/dashboardActions";
+import { useDispatch, useSelector } from "react-redux";
+import { currentFarmRecord } from "../../store/selectors/pigSelectors";
+import { fetchCurrentFarm } from "../../store/actions/pigActions";
 
 // Dummy stages
 const STAGES = [
@@ -20,16 +24,16 @@ const STAGES = [
 ];
 
 // Dummy fallback
-const fetchDataFallback = async (stage) => {
-  const sample = [
-    { pigId: "P-001", sex: "Male", breed: "Landrace", currentStage: stage },
-    { pigId: "P-002", sex: "Female", breed: "Yorkshire", currentStage: stage },
-    { pigId: "P-003", sex: "Male", breed: "Duroc", currentStage: stage },
-    { pigId: "P-004", sex: "Female", breed: "Hampshire", currentStage: stage },
-    { pigId: "P-005", sex: "Male", breed: "Yorkshire", currentStage: stage },
-  ];
-  return sample;
-};
+// const fetchDataFallback = async (stage) => {
+//   const sample = [
+//     { pigId: "P-001", sex: "Male", breed: "Landrace", currentStage: stage },
+//     { pigId: "P-002", sex: "Female", breed: "Yorkshire", currentStage: stage },
+//     { pigId: "P-003", sex: "Male", breed: "Duroc", currentStage: stage },
+//     { pigId: "P-004", sex: "Female", breed: "Hampshire", currentStage: stage },
+//     { pigId: "P-005", sex: "Male", breed: "Yorkshire", currentStage: stage },
+//   ];
+//   return sample;
+// };
 
 const norm = (v) => (typeof v === "string" ? v.trim().toLowerCase() : v);
 
@@ -110,6 +114,7 @@ const columns = [
 ];
 
 export default function StageDistributionReport() {
+  const dispatch = useDispatch();
   const [stageData, setStageData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [tableTitle, setTableTitle] = useState("");
@@ -119,8 +124,10 @@ export default function StageDistributionReport() {
     let mounted = true;
     (async () => {
       const results = await Promise.all(
-        STAGES.map(({ key }) => fetchDataFallback(key))
+        STAGES.map(({ key }) => getAllPigsByStage(selectedFarm, key.key))
       );
+
+      console.log("results ::::", results)
       const mapped = {};
       STAGES.forEach(({ key }, i) => (mapped[key] = results[i] || []));
       if (mounted) setStageData(mapped);
@@ -129,6 +136,12 @@ export default function StageDistributionReport() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    dispatch(fetchCurrentFarm());
+  }, [dispatch])
+
+  const selectedFarm = useSelector(currentFarmRecord);
 
   const grandTotal = useMemo(
     () =>
@@ -391,7 +404,7 @@ export default function StageDistributionReport() {
                   searchKey="pigId"
                 />
               </div>
-            </motion.div> 
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

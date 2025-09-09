@@ -303,3 +303,55 @@ export const getAllUpdatedPigIds = async () => {
     return { success: false, data: error.message };
   }
 };
+
+export const getAllPigsByStage = async (
+  selectedFarm,
+  stageName,
+  lastEvaluatedKey = null,
+  limit = 50
+) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const currentStage = stageName;
+
+    const queryParams = { limit };
+    if (lastEvaluatedKey) {
+      queryParams.lastEvaluatedKey = lastEvaluatedKey;
+    }
+
+    const queryString = buildQueryString(queryParams);
+    const response = await fetch(
+      `${API_BASE_URL}/current/${selectedFarm}/${currentStage}?${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.log("active error -> ", errorBody);
+      return {
+        success: false,
+        data:
+          errorBody.message || `Failed to fetch current ${stageName} records`,
+      };
+    }
+
+    const data = await response.json();
+    console.log("active data pig population -> ", data);
+    return {
+      success: true,
+      data: data.data,
+      lastEvaluatedKey: data.lastEvaluatedKey,
+      hasMore: data.hasMore,
+    };
+  } catch (err) {
+    return { success: false, data: err.message };
+  }
+};

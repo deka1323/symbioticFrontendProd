@@ -17,13 +17,19 @@ const PopulationReport = ({ showDetails }) => {
         dispatch(fetchCurrentFarm());
     }, [dispatch])
 
+    useEffect(() => {
+        console.log("stats -> ", stats)
+    }, [stats])
+
     const selectedFarm = useSelector(currentFarmRecord);
 
     // Fetch + process pig data
     useEffect(() => {
+        if (!selectedFarm) return;
         const fetchData = async () => {
             try {
                 const pigs = await getPigPopulationReports(selectedFarm); // returns list of pigs
+                console.log("PIGS --> ", pigs)
 
                 const summary = {
                     total: 0,
@@ -31,10 +37,10 @@ const PopulationReport = ({ showDetails }) => {
                     female: { total: 0, breeds: {} },
                 };
 
-                if (Array.isArray(pigs) && pigs.length > 0) {
-                    summary.total = pigs.length;
+                if (Array.isArray(pigs.data) && pigs.data.length > 0) {
+                    summary.total = pigs.data.length;
 
-                    pigs.forEach((pig) => {
+                    pigs.data.forEach((pig) => {
                         const { sex, breed } = pig || {};
                         if (!sex || !breed) return;
 
@@ -55,7 +61,7 @@ const PopulationReport = ({ showDetails }) => {
         };
 
         fetchData();
-    }, []);
+    }, [selectedFarm]);
 
 
     // CSV download function

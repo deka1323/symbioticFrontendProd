@@ -20,6 +20,13 @@ import {
     currentFarmRecord
 } from '../../store/selectors/pigSelectors';
 
+const Loader = () => (
+    <div className="flex justify-center items-center py-10">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-pink-600"></div>
+    </div>
+);
+
+
 const BreedingStage = () => {
     const dispatch = useDispatch();
     const [showNewBreeding, setShowNewBreeding] = useState(false);
@@ -49,7 +56,6 @@ const BreedingStage = () => {
 
     const selectedFarm = useSelector(currentFarmRecord);
 
-    console.log("Current selected Farm -", selectedFarm)
 
     const currentBreeding = useSelector(selectCurrentBreedingRecords);
     const breedingHistory = useSelector(selectBreedingHistory);
@@ -398,53 +404,48 @@ const BreedingStage = () => {
                                     <p className="text-sm text-gray-600 mb-4">
                                         Click Edit to modify service details including mating date
                                     </p>
-                                    <AdvancedTable
-                                        data={currentBreeding}
-                                        columns={currentBreedingColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        // searchKey="sowId"
-                                        searchKey="pigId"
-                                        actionButtons={currentBreedingActions}
-                                        onAction={handleAction}
-                                    />
+
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={currentBreeding}
+                                            columns={currentBreedingColumns}
+                                            searchPlaceholder="Search by Pig ID..."
+                                            searchKey="pigId"
+                                            actionButtons={currentBreedingActions}
+                                            onAction={handleAction}
+                                        />
+                                    )}
                                 </div>
                             )}
+
 
                             {selectedFilter === 'history' && (
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Service History</h3>
-                                    {/* Month Selection for History */}
+
+                                    {/* Month Filter */}
                                     <div className="mb-4 flex items-center space-x-4">
                                         <span className="text-sm font-medium text-gray-700">Filter by month:</span>
-                                        <select
-                                            value={selectedMonth}
-                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
-                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                        >
-                                            {months.map((month, index) => (
-                                                <option key={index} value={index}>{month}</option>
-                                            ))}
-                                        </select>
-                                        <select
-                                            value={selectedYear}
-                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                            className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                                        >
-                                            {[2023, 2024, 2025].map(year => (
-                                                <option key={year} value={year}>{year}</option>
-                                            ))}
-                                        </select>
+                                        {/* ... your selects ... */}
                                     </div>
-                                    <AdvancedTable
-                                        data={filteredHistoryRecords}
-                                        columns={historyBreedingColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="pigId"
-                                        actionButtons={historyBreedingActions}
-                                        onAction={() => { }}
-                                    />
+
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={filteredHistoryRecords}
+                                            columns={historyBreedingColumns}
+                                            searchPlaceholder="Search by Pig ID..."
+                                            searchKey="pigId"
+                                            actionButtons={historyBreedingActions}
+                                            onAction={() => { }}
+                                        />
+                                    )}
                                 </div>
                             )}
+
                         </div>
                     </div>
                 </div>
