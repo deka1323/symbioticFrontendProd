@@ -20,26 +20,21 @@ const AdvancedTable = ({
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [pendingAction, setPendingAction] = useState(null);
 
-
     // Search functionality
     const filteredData = useMemo(() => {
-        console.log("data ->", data)
         if (!searchTerm) return data;
 
         const filtered = data.filter(item => {
             if (searchKey) {
-                // Search only by specific key (e.g., pigId)
                 const value = item[searchKey];
                 return value?.toString().toLowerCase().includes(searchTerm.toLowerCase());
             } else {
-                // Search across all values
                 return Object.values(item).some(value =>
                     value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
                 );
             }
         });
 
-        // Show toast for search results
         if (searchTerm && filtered.length === 0) {
             toast.error(`No entries found for "${searchTerm}"`);
         } else if (searchTerm && filtered.length > 0) {
@@ -57,19 +52,16 @@ const AdvancedTable = ({
             const aValue = a[sortConfig.key];
             const bValue = b[sortConfig.key];
 
-            // Handle date sorting
             if (sortConfig.key.toLowerCase().includes('date')) {
                 const dateA = new Date(aValue);
                 const dateB = new Date(bValue);
                 return sortConfig.direction === 'asc' ? dateA - dateB : dateB - dateA;
             }
 
-            // Handle number sorting
             if (typeof aValue === 'number' && typeof bValue === 'number') {
                 return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
             }
 
-            // Handle string sorting
             const stringA = aValue?.toString().toLowerCase() || '';
             const stringB = bValue?.toString().toLowerCase() || '';
 
@@ -86,7 +78,6 @@ const AdvancedTable = ({
     const startIndex = (currentPage - 1) * itemsPerPage;
     const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
 
-    // Reset to first page when search changes
     React.useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, itemsPerPage]);
@@ -169,7 +160,6 @@ const AdvancedTable = ({
                     </div>
                 </div>
 
-                {/* Results info */}
                 <div className="mt-3 text-sm text-gray-600">
                     Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedData.length)} of {sortedData.length} entries
                     {searchTerm && ` (filtered from ${data.length} total entries)`}
@@ -181,6 +171,11 @@ const AdvancedTable = ({
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
+                            {/* Serial No column */}
+                            <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                S.No
+                            </th>
+
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
@@ -194,6 +189,7 @@ const AdvancedTable = ({
                                     </div>
                                 </th>
                             ))}
+
                             {actionButtons.length > 0 && (
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
@@ -204,24 +200,34 @@ const AdvancedTable = ({
                     <tbody className="bg-white divide-y divide-gray-200">
                         {paginatedData.length === 0 ? (
                             <tr>
-                                <td colSpan={columns.length + (actionButtons.length > 0 ? 1 : 0)} className="px-6 py-8 text-center text-gray-500">
+                                <td
+                                    colSpan={columns.length + 1 + (actionButtons.length > 0 ? 1 : 0)}
+                                    className="px-6 py-8 text-center text-gray-500"
+                                >
                                     {searchTerm ? `No results found for "${searchTerm}"` : 'No data available'}
                                 </td>
                             </tr>
                         ) : (
                             paginatedData.map((item, index) => (
-                                <>
+                                <React.Fragment key={item.id || index}>
                                     <tr
-                                        key={item.id || index}
-                                        className={`hover:bg-gray-50 transition-colors duration-150 ${rowClickable ? 'cursor-pointer' : ''
-                                            }`}
+                                        className={`hover:bg-gray-50 transition-colors duration-150 ${rowClickable ? 'cursor-pointer' : ''}`}
                                         onClick={() => handleRowClick(item)}
                                     >
+                                        {/* Serial No cell */}
+                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {startIndex + index + 1}
+                                        </td>
+
                                         {columns.map((column) => (
-                                            <td key={column.key} className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td
+                                                key={column.key}
+                                                className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                            >
                                                 {column.render ? column.render(item[column.key], item) : item[column.key]}
                                             </td>
                                         ))}
+
                                         {actionButtons.length > 0 && (
                                             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <div className="flex flex-col sm:flex-row gap-2">
@@ -240,7 +246,7 @@ const AdvancedTable = ({
                                         )}
                                     </tr>
                                     {customRowRenderer && customRowRenderer(item)}
-                                </>
+                                </React.Fragment>
                             ))
                         )}
                     </tbody>
@@ -263,7 +269,6 @@ const AdvancedTable = ({
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
 
-                            {/* Page numbers */}
                             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                 let pageNum;
                                 if (totalPages <= 5) {
@@ -281,8 +286,8 @@ const AdvancedTable = ({
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
                                         className={`px-3 py-1 border rounded-md text-sm ${currentPage === pageNum
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'border-gray-300 hover:bg-gray-50'
+                                                ? 'bg-blue-600 text-white border-blue-600'
+                                                : 'border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         {pageNum}

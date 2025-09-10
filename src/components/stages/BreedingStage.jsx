@@ -155,11 +155,11 @@ const BreedingStage = () => {
 
     // Current breeding table columns
     const currentBreedingColumns = [
-        {
-            key: 'recordId',
-            label: 'Service ID',
-            sortable: true
-        },
+        // {
+        //     key: 'recordId',
+        //     label: 'Service ID',
+        //     sortable: true
+        // },
         {
             key: 'pigId',
             label: 'Sow ID',
@@ -198,7 +198,7 @@ const BreedingStage = () => {
 
     // History breeding table columns
     const historyBreedingColumns = [
-        { key: 'recordId', label: 'Service ID', sortable: true },
+        // { key: 'recordId', label: 'Service ID', sortable: true },
         {
             key: 'pigId',
             label: 'Sow Details',

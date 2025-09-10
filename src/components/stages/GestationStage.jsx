@@ -111,7 +111,7 @@ const GestationStage = () => {
 
     // Current records table columns
     const currentRecordsColumns = [
-        { key: 'recordId', label: 'Record ID', sortable: true },
+        // { key: 'recordId', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
         { key: 'inDate', label: 'In Date', sortable: true },
         {
@@ -131,7 +131,7 @@ const GestationStage = () => {
 
     // History records table columns
     const historyRecordsColumns = [
-        { key: 'recordId', label: 'Record ID', sortable: true },
+        // { key: 'recordId', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'outDate', label: 'Out Date', sortable: true },
