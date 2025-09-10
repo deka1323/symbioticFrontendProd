@@ -66,6 +66,8 @@ const FarrowingStage = () => {
         }
     }, [dispatch, selectedFilter, selectedMonth, selectedYear]);
 
+    console.log("CURRENT FARROWING RECORDSS -=>", currentFarrowingRecords)
+
     const handleMoveToNextStage = async (action, item) => {
         const loadingToast = toast.loading(`Moving ${item.pigId} to Nursery stage...`);
 
@@ -139,26 +141,26 @@ const FarrowingStage = () => {
     };
 
     const currentRecordsColumns = [
-        { key: 'id', label: 'Record ID', sortable: true },
+        // { key: 'id', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'farrowingDate', label: 'Farrowing Date', sortable: true },
-        { key: 'stillBorn', label: 'Still Born', sortable: true },
-        { key: 'mummyBorn', label: 'Mummy Born', sortable: true },
-        { key: 'liveBorn', label: 'Live Born', sortable: true },
-        { key: 'deathDuringFarrowing', label: 'Death During Farrowing', sortable: true },
+        { key: 'stillBorn', label: 'Still Born', sortable: true, render: (value, item) => item.stageSpecificData.stillBorn, },
+        { key: 'mummyBorn', label: 'Mummy Born', sortable: true, render: (value, item) => item.stageSpecificData.mummyBorn, },
+        { key: 'liveBorn', label: 'Live Born', sortable: true, render: (value, item) => item.stageSpecificData.liveBorn, },
+        { key: 'deathDuringFarrowing', label: 'Death During Farrowing', sortable: true, render: (value, item) => item.stageSpecificData.deathDuringFarrowing, },
         {
             key: 'totalBorn',
             label: 'Total Pig Born',
             sortable: true,
-            render: (value, item) => item.stillBorn + item.mummyBorn + item.liveBorn
+            render: (value, item) => item.stageSpecificData.totalBorn,
         },
-        { key: 'weaningCount', label: 'No of Weaning', sortable: true },
+        { key: 'weaningCount', label: 'No of Weaning', sortable: true, render: (value, item) => item.stageSpecificData.weaningCount, },
         {
             key: 'atw',
             label: 'ATW (kg)',
             sortable: true,
-            render: (value) => `${value} kg`
+            render: (value, item) => `${item.stageSpecificData.atw} kg`,
         },
     ];
 
