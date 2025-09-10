@@ -30,6 +30,14 @@ export const PIG_ACTION_TYPES = {
   MOVE_TO_NURSERY_SUCCESS: "MOVE_TO_NURSERY_SUCCESS",
   MOVE_TO_NURSERY_FAILURE: "MOVE_TO_NURSERY_FAILURE",
 
+  // FATTENING ACTIONS
+  FETCH_FATTENING_RECORDS_START: "FETCH_FATTENING_RECORDS_START",
+  FETCH_FATTENING_RECORDS_SUCCESS: "FETCH_FATTENING_RECORDS_SUCCESS",
+  FETCH_FATTENING_RECORDS_FAILURE: "FETCH_FATTENING_RECORDS_FAILURE",
+  MOVE_FATTENING_TO_DRIED_START: "MOVE_FATTENING_TO_DRIED_START",
+  MOVE_FATTENING_TO_DRIED_SUCCESS: "MOVE_FATTENING_TO_DRIED_SUCCESS",
+  MOVE_FATTENING_TO_DRIED_FAILURE: "MOVE_FATTENING_TO_DRIED_FAILURE",
+
   // // Stage Management Actions
   MOVE_TO_NEXT_STAGE_START: "MOVE_TO_NEXT_STAGE_START",
   MOVE_TO_NEXT_STAGE_SUCCESS: "MOVE_TO_NEXT_STAGE_SUCCESS",
@@ -67,7 +75,7 @@ export const PIG_ACTION_TYPES = {
   FETCH_SELECTED_FARM_RECORDS_FAILURE: "FETCH_SELECTED_FARM_RECORDS_FAILURE",
 };
 
-// Action Creators
+// Action Creators ======================================================
 export const addFarmRecord = (farmRecord) => ({
   type: PIG_ACTION_TYPES.ADD_FARM_RECORD,
   payload: farmRecord,
@@ -145,7 +153,7 @@ export const moveToGestationFailure = (error) => ({
   payload: { error },
 });
 
-// Gestation Action Creators
+// Gestation Action Creators ==========================================================
 export const fetchGestationRecordsStart = () => ({
   type: PIG_ACTION_TYPES.FETCH_GESTATION_RECORDS_START,
 });
@@ -205,7 +213,7 @@ export const moveToNextStageFailure = (error) => ({
   payload: { error },
 });
 
-// Farrowing
+// Farrowing Action Creators ===============================================================
 export const fetchFarrowingRecordsStart = () => ({
   type: PIG_ACTION_TYPES.FETCH_FARROWING_RECORDS_START,
 });
@@ -216,7 +224,7 @@ export const fetchFarrowingRecordsSuccess = (records) => ({
 });
 
 export const fetchFarrowingRecordsFailure = (error) => ({
-  type: PIG_ACTION_TYPES.FETCH_GESTATION_RECORDS_FAILURE,
+  type: PIG_ACTION_TYPES.FETCH_FARROWING_RECORDS_FAILURE,
   payload: error,
 });
 
@@ -268,7 +276,7 @@ export const fetchNurseryRecordsFailure = (error) => ({
   type: PIG_ACTION_TYPES.FETCH_NURSERY_RECORDS_FAILURE,
   payload: error,
 });
-
+// =============================================
 export const setLoading = (isLoading) => ({
   type: PIG_ACTION_TYPES.SET_LOADING,
   payload: isLoading,
@@ -283,7 +291,7 @@ export const clearError = () => ({
   type: PIG_ACTION_TYPES.CLEAR_ERROR,
 });
 
-// Nursery
+// Nursery Action Creators ===================================================================
 export const fetchNurseryLitterRecordsStart = () => ({
   type: PIG_ACTION_TYPES.FETCH_NURSERYLITTER_RECORDS_START,
 });
@@ -308,12 +316,43 @@ export const updatePigletRecordAction = (record) => ({
   payload: record,
 });
 
+// Fattening Action Creators =================================================================
+export const fetchFatteningRecordsStart = () => ({
+  type: PIG_ACTION_TYPES.FETCH_FATTENING_RECORDS_START,
+});
+
+export const fetchFatteningRecordsSuccess = (records) => ({
+  type: PIG_ACTION_TYPES.FETCH_FATTENING_RECORDS_SUCCESS,
+  payload: records,
+});
+
+export const fetchFatteningRecordsFailure = (error) => ({
+  type: PIG_ACTION_TYPES.FETCH_FATTENING_RECORDS_FAILURE,
+  payload: error,
+});
+
+export const moveFatteningToDriedStart = (fatteningId) => ({
+  type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_START,
+  payload: { fatteningId },
+});
+
+export const moveFatteningToDriedSuccess = (fatteningId, driedRecord) => ({
+  type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_SUCCESS,
+  payload: { fatteningId, driedRecord },
+});
+
+export const moveFatteningToDriedFailure = (error) => ({
+  type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_FAILURE,
+  payload: { error },
+});
+
 // Thunk Actions (Async Actions)
 import * as breedingAPI from "../../actions/breedingActions";
 import * as gestationAPI from "../../actions/gestationActions";
 import * as farrowingAPI from "../../actions/farrowingActions";
 import * as nurseryAPI from "../../actions/nurseryActions";
 import * as farmAPI from "../../actions/dashboardActions";
+import * as fatteningAPI from "../../actions/fatteningActions";
 
 export const fetchBreedingRecords = () => {
   return async (dispatch) => {
@@ -422,6 +461,7 @@ export const moveToNextStage = (
 
 // import * as breedingAPI from '../../actions/breedingActions'; // make sure path is correct
 
+// Gestation Thunk Actions ------------------------------------------------------
 export const fetchCurrentBreedingRecords = (selectedFarm) => {
   return async (dispatch) => {
     dispatch(fetchBreedingRecordsStart());
@@ -493,7 +533,7 @@ export const createBreedingRecord = (breedingData) => {
   };
 };
 
-// Gestation Thunk Actions
+// Gestation Thunk Actions --------------------------------------------------------
 export const fetchCurrentGestationRecords = (selectedFarm) => {
   return async (dispatch) => {
     dispatch(fetchGestationRecordsStart());
@@ -607,7 +647,7 @@ export const moveGestationToFattening = (record) => {
   };
 };
 
-// Farrowing Thunk Actions
+// Farrowing Thunk Actions  ------------------------------------------------------
 export const fetchCurrentFarrowingRecords = (selectedFarm) => {
   return async (dispatch) => {
     dispatch(fetchFarrowingRecordsStart());
@@ -711,7 +751,151 @@ export const updateFarrowingRecord = (record) => {
   };
 };
 
-// Nursery Thunk Actions
+// Fatening Thunk Actions  ------------------------------------------------------
+export const fetchCurrentFatteningRecords = (selectedFarm) => {
+  return async (dispatch) => {
+    dispatch(fetchFatteningRecordsStart());
+
+    try {
+      const result = await fatteningAPI.getAllActiveFatteningRecords(
+        selectedFarm
+      );
+      console.log("hey ->", result);
+
+      if (result.success) {
+        dispatch(fetchFatteningRecordsSuccess(result.data));
+        return { success: true, data: result.data };
+      } else {
+        dispatch(fetchFatteningRecordsFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(fetchFatteningRecordsFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+export const fetchFatteningHistoryByMonth = (year, month, selectedFarm) => {
+  return async (dispatch) => {
+    dispatch(fetchFatteningRecordsStart());
+
+    try {
+      const result = await fatteningAPI.getFatteningHistoryByMonth(
+        year,
+        month,
+        selectedFarm
+      );
+
+      if (result.success) {
+        dispatch(fetchFatteningRecordsSuccess(result.data));
+        return { success: true, data: result.data };
+      } else {
+        dispatch(fetchFatteningRecordsFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(fetchFatteningRecordsFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+export const moveFatteningToDried = (record) => {
+  return async (dispatch, getState) => {
+    const fatteningId = record.recordId;
+    dispatch(moveToDriedStart(fatteningId));
+
+    try {
+      const result = await fatteningAPI.sendToFattening(record);
+
+      if (result.success) {
+        console.log("Moving to Dried", fatteningId, result.data.driedRecord);
+        dispatch(moveToDriedSuccess(fatteningId, result.data.driedRecord));
+        return { success: true, targetStage: result.data.targetStage };
+      } else {
+        dispatch(moveToDriedFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(moveToDriedFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+// Dried Thunk Actions
+export const fetchCurrentDriedRecords = (selectedFarm) => {
+  return async (dispatch) => {
+    dispatch(fetchDriedRecordsStart());
+
+    try {
+      const result = await driedAPI.getAllActiveDriedRecords(selectedFarm);
+      console.log("hey ->", result);
+
+      if (result.success) {
+        dispatch(fetchDriedRecordsSuccess(result.data));
+        return { success: true, data: result.data };
+      } else {
+        dispatch(fetchDriedRecordsFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(fetchDriedRecordsFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+export const fetchDriedHistoryByMonth = (year, month, selectedFarm) => {
+  return async (dispatch) => {
+    dispatch(fetchDriedRecordsStart());
+
+    try {
+      const result = await driedAPI.getDriedHistoryByMonth(
+        year,
+        month,
+        selectedFarm
+      );
+
+      if (result.success) {
+        dispatch(fetchDriedRecordsSuccess(result.data));
+        return { success: true, data: result.data };
+      } else {
+        dispatch(fetchDriedRecordsFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(fetchDriedRecordsFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+export const moveDriedToInhouse = (record) => {
+  return async (dispatch, getState) => {
+    const fatteningId = record.recordId;
+    dispatch(moveToDriedStart(fatteningId));
+
+    try {
+      const result = await fatteningAPI.sendToFattening(record);
+
+      if (result.success) {
+        console.log("Moving to Dried", fatteningId, result.data.driedRecord);
+        dispatch(moveToDriedSuccess(fatteningId, result.data.driedRecord));
+        return { success: true, targetStage: result.data.targetStage };
+      } else {
+        dispatch(moveToDriedFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(moveToDriedFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+// Nursery Thunk Actions ---------------------------------------------------------
 export const fetchCurrentNurseryLitterRecords = (selectedFarm) => {
   return async (dispatch) => {
     dispatch(fetchNurseryLitterRecordsStart());
@@ -842,7 +1026,7 @@ export const fetchCurrentNurseryRecords = (selectedFarm) => {
   };
 };
 
-// Farm Thunk Actions
+// Farm Thunk Actions --------------------------------------------------------------
 export const fetchAllFarms = () => {
   return async (dispatch) => {
     dispatch(fetchFarmRecordsStart());

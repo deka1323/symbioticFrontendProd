@@ -14,8 +14,8 @@ const buildQueryString = (params) => {
   return searchParams.toString();
 };
 
-// Get all active gestation records with pagination
-export const getAllActiveFatteningRecords = async (
+// Get all active dried records with pagination
+export const getAllActiveDriedRecords = async (
   selectedFarm,
   lastEvaluatedKey = null,
   limit = 50
@@ -23,7 +23,7 @@ export const getAllActiveFatteningRecords = async (
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
-    const currentStage = "fattening";
+    const currentStage = "dried";
 
     const queryParams = { limit };
     if (lastEvaluatedKey) {
@@ -46,15 +46,15 @@ export const getAllActiveFatteningRecords = async (
 
     if (!response.ok) {
       const errorBody = await response.json();
-      console.log("Active fattening error -> ", errorBody);
+      console.log("Active dried error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to fetch current fattening records",
+        data: errorBody.message || "Failed to fetch current dried records",
       };
     }
 
     const data = await response.json();
-    console.log("Active fattening data -> ", data);
+    console.log("Active dried data -> ", data);
     return {
       success: true,
       data: data.data,
@@ -66,8 +66,8 @@ export const getAllActiveFatteningRecords = async (
   }
 };
 
-// Get fattening history by month with pagination
-export const getFatteningHistoryByMonth = async (
+// Get dried history by month with pagination
+export const getDriedHistoryByMonth = async (
   year,
   month,
   selectedFarm,
@@ -77,7 +77,7 @@ export const getFatteningHistoryByMonth = async (
   try {
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
-    const currentStage = "fattening";
+    const currentStage = "dried";
 
     const queryParams = { limit };
     if (lastEvaluatedKey) {
@@ -98,15 +98,15 @@ export const getFatteningHistoryByMonth = async (
 
     if (!response.ok) {
       const errorBody = await response.json();
-      console.log("Fattening history error -> ", errorBody);
+      console.log("Dried history error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to fetch fattening history",
+        data: errorBody.message || "Failed to fetch dried history",
       };
     }
 
     const data = await response.json();
-    console.log("fattening history data -> ", data);
+    console.log("dried history data -> ", data);
     return {
       success: true,
       data: data.data,
@@ -119,55 +119,12 @@ export const getFatteningHistoryByMonth = async (
   }
 };
 
-// Send fattening pig to dried stage
-export const sendToDried = async (record) => {
-  console.log("record ->", record);
-  try {
-    console.log("Sending to dried ->", record);
-    const fatteningId = record.recordId;
-    const updateData = {
-      pigId: record.pigId,
-      selectedFarm: record.selectedFarm,
-    };
-    console.log("updateData ->", updateData);
-    const session = await fetchAuthSession();
-    const idToken = session.tokens?.idToken?.toString();
-
-    const response = await fetch(
-      `${API_BASE_URL}/fattening/sendToDried/${fatteningId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      }
-    );
-
-    if (!response.ok) {
-      const errorBody = await response.json();
-      console.log("Send to dried error -> ", errorBody);
-      return {
-        success: false,
-        data: errorBody.message || "Failed to move to dried",
-      };
-    }
-
-    const data = await response.json();
-    console.log("Send to dried data -> ", data);
-    return { success: true, data: data.data };
-  } catch (err) {
-    return { success: false, data: err.message };
-  }
-};
-
-// Send fattening pig to in-house stage
+// Send dried pig to in-house stage
 export const sendToInHouse = async (record) => {
   console.log("record ->", record);
   try {
     console.log("Sending to in-house ->", record);
-    const fatteningId = record.recordId;
+    const driedId = record.recordId;
     const updateData = {
       pigId: record.pigId,
       selectedFarm: record.selectedFarm,
@@ -177,7 +134,7 @@ export const sendToInHouse = async (record) => {
     const idToken = session.tokens?.idToken?.toString();
 
     const response = await fetch(
-      `${API_BASE_URL}/fattening/sendToInHouse/${fatteningId}`,
+      `${API_BASE_URL}/dried/sendToInHouse/${driedId}`,
       {
         method: "POST",
         headers: {

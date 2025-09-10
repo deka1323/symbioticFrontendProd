@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { TrendingUp, Calendar, History, Filter } from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
-import { selectIsMovingPig, selectMovingPigId } from '../../store/selectors/pigSelectors';
+import {
+    selectCurrentFatteningRecords,
+    selectFatteningHistory,
+    selectIsMovingPig,
+    selectMovingPigId,
+} from '../../store/selectors/pigSelectors';
+import { fetchCurrentFatteningRecords, fetchFatteningHistoryByMonth } from '../../store/actions/pigActions';
 import AdvancedTable from '../common/AdvancedTable';
 
 const FatteningStage = () => {
@@ -24,12 +30,24 @@ const FatteningStage = () => {
     // Redux selectors
     const isMovingPig = useSelector(selectIsMovingPig);
     const movingPigId = useSelector(selectMovingPigId);
+    const currentRecords = useSelector(selectCurrentFatteningRecords);
+    const historyRecords = useSelector(selectFatteningHistory);
+
+    const selectedFarm = "F1"; // fixed for now
+
+    // Fetch data when filter or month/year changes
+    useEffect(() => {
+        if (selectedFilter === 'current') {
+            dispatch(fetchCurrentFatteningRecords(selectedFarm));
+        } else {
+            dispatch(fetchFatteningHistoryByMonth(selectedYear, selectedMonth + 1, selectedFarm));
+        }
+    }, [dispatch, selectedFilter, selectedMonth, selectedYear, selectedFarm]);
 
     const handleSellPig = async (action, item) => {
         const loadingToast = toast.loading(`Processing sale for ${item.pigId}...`);
-
         try {
-            // Here you would dispatch an action to mark pig as sold
+            // TODO: dispatch action here to update pig status
             toast.success(`${item.pigId} successfully marked as sold!`, {
                 id: loadingToast,
                 duration: 3000,
@@ -45,12 +63,19 @@ const FatteningStage = () => {
         const min = parseFloat(weightRange.min) || 0;
         const max = parseFloat(weightRange.max) || Infinity;
 
-        const filtered = mockCurrentRecords.filter(pig =>
-            pig.weight >= min && pig.weight <= max
+        const sourceData =
+            selectedFilter === 'current'
+                ? currentRecords
+                : historyRecords;
+
+        const filtered = sourceData.filter(
+            pig => pig.weight >= min && pig.weight <= max
         );
 
         setFilteredData(filtered);
-        toast.success(`Found ${filtered.length} pigs in weight range ${min}kg - ${max === Infinity ? '∞' : max}kg`);
+        toast.success(
+            `Found ${filtered.length} pigs in weight range ${min}kg - ${max === Infinity ? '∞' : max}kg`
+        );
         setShowWeightFilter(false);
     };
 
@@ -60,75 +85,25 @@ const FatteningStage = () => {
         toast.info('Weight filter cleared');
     };
 
-    // Mock data for demonstration
-    // const mockCurrentRecords = [
-    //     {
-    //         id: 'FT001',
-    //         pigId: 'PIG101',
-    //         fatherPigId: 'BOAR003',
-    //         motherPigId: 'PIG001',
-    //         breed: 'Yorkshire-Duroc',
-    //         sex: 'female',
-    //         weight: 45.5,
-    //         inDate: '2024-03-01',
-    //         status: 'active',
-    //         pregnancyFailed: false
-    //     },
-    //     {
-    //         id: 'FT002',
-    //         pigId: 'PIG102',
-    //         fatherPigId: 'BOAR003',
-    //         motherPigId: 'PIG001',
-    //         breed: 'Yorkshire-Duroc',
-    //         sex: 'male',
-    //         weight: 52.3,
-    //         inDate: '2024-03-01',
-    //         status: 'active',
-    //         pregnancyFailed: false
-    //     },
-    //     {
-    //         id: 'FT003',
-    //         pigId: 'PIG103',
-    //         fatherPigId: 'BOAR005',
-    //         motherPigId: 'PIG025',
-    //         breed: 'Landrace-Hampshire',
-    //         sex: 'female',
-    //         weight: 38.7,
-    //         inDate: '2024-03-05',
-    //         status: 'active',
-    //         pregnancyFailed: true
-    //     }
-    // ];
-    const mockCurrentRecords = [];
-    const mockHistoryRecords = [];
-
-    // const mockHistoryRecords = [
-    //     {
-    //         id: 'FT004',
-    //         pigId: 'PIG090',
-    //         fatherPigId: 'BOAR001',
-    //         motherPigId: 'PIG010',
-    //         breed: 'Yorkshire',
-    //         sex: 'male',
-    //         weight: 65.2,
-    //         inDate: '2024-01-15',
-    //         outDate: '2024-02-20',
-    //         status: 'sold',
-    //         outcome: 'Sold to market',
-    //         pregnancyFailed: false
-    //     }
-    // ];
-
-    // Filter history records by month
-    const filteredHistoryRecords = mockHistoryRecords.filter(record => {
+    // Filter history records by month/year
+    const filteredHistoryRecords = historyRecords.filter(record => {
         const recordDate = new Date(record.outDate);
-        return recordDate.getMonth() === selectedMonth && recordDate.getFullYear() === selectedYear;
+        return (
+            recordDate.getMonth() === selectedMonth &&
+            recordDate.getFullYear() === selectedYear
+        );
     });
 
-    const dataToShow = filteredData.length > 0 ? filteredData : mockCurrentRecords;
+    // Data source for current vs history
+    const dataToShow =
+        filteredData.length > 0
+            ? filteredData
+            : selectedFilter === 'current'
+                ? currentRecords
+                : filteredHistoryRecords;
 
-    // Current records table columns
-    const currentRecordsColumns = [
+    // Columns definition
+    const baseColumns = [
         { key: 'pigId', label: 'Pig ID', sortable: true },
         {
             key: 'fatherPigId',
@@ -139,7 +114,7 @@ const FatteningStage = () => {
                     <div className="text-sm text-gray-900">Father: {value}</div>
                     <div className="text-sm text-gray-500">Mother: {item.motherPigId}</div>
                 </div>
-            )
+            ),
         },
         { key: 'breed', label: 'Breed', sortable: true },
         {
@@ -147,70 +122,51 @@ const FatteningStage = () => {
             label: 'Sex',
             sortable: true,
             render: (value) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value === 'male' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
-                    }`}>
+                <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value === 'male'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-pink-100 text-pink-800'
+                        }`}
+                >
                     {value}
                 </span>
-            )
+            ),
         },
+    ];
+
+    const currentRecordsColumns = [
+        ...baseColumns,
         {
             key: 'weight',
             label: 'Weight (kg)',
             sortable: true,
-            render: (value) => `${value} kg`
+            render: (value) => `${value} kg`,
         },
         { key: 'inDate', label: 'In Date', sortable: true },
         {
             key: 'pregnancyFailed',
             label: 'Status',
             sortable: true,
-            render: (value, item) => (
-                <div>
-                    {value ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                            Pregnancy Failed
-                        </span>
-                    ) : (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Normal
-                        </span>
-                    )}
-                </div>
-            )
+            render: (value) => (
+                <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                >
+                    {value ? 'Pregnancy Failed' : 'Normal'}
+                </span>
+            ),
         },
     ];
 
-    // History records table columns
     const historyRecordsColumns = [
-        { key: 'pigId', label: 'Pig ID', sortable: true },
-        {
-            key: 'fatherPigId',
-            label: 'Parents',
-            sortable: true,
-            render: (value, item) => (
-                <div>
-                    <div className="text-sm text-gray-900">Father: {value}</div>
-                    <div className="text-sm text-gray-500">Mother: {item.motherPigId}</div>
-                </div>
-            )
-        },
-        { key: 'breed', label: 'Breed', sortable: true },
-        {
-            key: 'sex',
-            label: 'Sex',
-            sortable: true,
-            render: (value) => (
-                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value === 'male' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800'
-                    }`}>
-                    {value}
-                </span>
-            )
-        },
+        ...baseColumns,
         {
             key: 'weight',
             label: 'Final Weight',
             sortable: true,
-            render: (value) => `${value} kg`
+            render: (value) => `${value} kg`,
         },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'outDate', label: 'Out Date', sortable: true },
@@ -220,66 +176,63 @@ const FatteningStage = () => {
             label: 'Status',
             sortable: true,
             render: (value) => (
-                value ? (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                        Pregnancy Failed
-                    </span>
-                ) : (
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        Normal
-                    </span>
-                )
-            )
-        }
+                <span
+                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}
+                >
+                    {value ? 'Pregnancy Failed' : 'Normal'}
+                </span>
+            ),
+        },
     ];
 
-    // Action buttons for current records
+    // Action buttons
     const currentRecordsActions = [
         {
             key: 'inhouse',
             label: 'Use In-House',
-            className: 'inline-flex items-center px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
+            className:
+                'inline-flex items-center px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
             requiresConfirmation: true,
-            confirmationMessage: 'This will mark the pig for in-house use. This action cannot be reversed.',
+            confirmationMessage:
+                'This will mark the pig for in-house use. This action cannot be reversed.',
             disabled: (item) => isMovingPig && movingPigId === item.id,
-            render: (item) => (
-                <>
-                    {isMovingPig && movingPigId === item.id ? (
-                        <>
-                            <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-green-600 mr-1"></div>
-                            Processing...
-                        </>
-                    ) : (
-                        'Use In-House'
-                    )}
-                </>
-            )
-        }
-    ];
-
-    // Action buttons for history
-    const historyRecordsActions = [
+            render: (item) =>
+                isMovingPig && movingPigId === item.id ? (
+                    <>
+                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-green-600 mr-1"></div>
+                        Processing...
+                    </>
+                ) : (
+                    'Use In-House'
+                ),
+        },
+        {
+            key: 'dried',
+            label: 'Send to Dried',
+            className:
+                'inline-flex items-center px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
+            requiresConfirmation: true,
+            confirmationMessage:
+                'This will mark the pig for dried use. This action cannot be reversed.',
+            disabled: (item) => isMovingPig && movingPigId === item.id,
+            render: (item) =>
+                isMovingPig && movingPigId === item.id ? (
+                    <>
+                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-green-600 mr-1"></div>
+                        Processing...
+                    </>
+                ) : (
+                    'Send To Dried'
+                ),
+        },
     ];
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 4000,
-                    style: {
-                        background: '#363636',
-                        color: '#fff',
-                    },
-                    success: {
-                        duration: 3000,
-                        theme: {
-                            primary: '#10b981',
-                            secondary: '#ffffff',
-                        },
-                    },
-                }}
-            />
+            <Toaster position="top-right" />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="mb-8">
@@ -294,14 +247,15 @@ const FatteningStage = () => {
                             </p>
                         </div>
 
-                        {/* Weight Filter Button */}
                         <div className="flex space-x-2">
                             <button
                                 onClick={() => setShowWeightFilter(true)}
                                 className="bg-yellow-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl hover:bg-yellow-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                             >
                                 <Filter className="h-4 w-4 sm:h-5 sm:w-5" />
-                                <span className="text-sm sm:text-base">Weight Filter</span>
+                                <span className="text-sm sm:text-base">
+                                    Weight Filter
+                                </span>
                             </button>
 
                             {filteredData.length > 0 && (
@@ -315,93 +269,93 @@ const FatteningStage = () => {
                         </div>
                     </div>
 
-                    {/* Weight Filter Display */}
-                    {filteredData.length > 0 && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                            <p className="text-yellow-800">
-                                <strong>Active Filter:</strong> Weight range {weightRange.min || '0'}kg - {weightRange.max || '∞'}kg
-                                ({filteredData.length} pigs found)
-                            </p>
-                        </div>
-                    )}
-
-                    {/* Filter Tabs */}
                     <div className="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
                         <div className="border-b border-gray-200">
                             <nav className="flex">
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                        ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
-                                    Current Fattening ({dataToShow.length})
+                                    Current Fattening ({currentRecords.length})
                                 </button>
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                        ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
-                                    History ({mockHistoryRecords.length})
+                                    History ({historyRecords.length})
                                 </button>
                             </nav>
                         </div>
 
                         <div className="p-4 sm:p-6">
                             {selectedFilter === 'current' && (
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                        Active Fattening Records
-                                    </h3>
-                                    <AdvancedTable
-                                        data={dataToShow}
-                                        columns={currentRecordsColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="pigId"
-                                        actionButtons={currentRecordsActions}
-                                        onAction={handleSellPig}
-                                    />
-                                </div>
+                                <AdvancedTable
+                                    data={dataToShow}
+                                    columns={currentRecordsColumns}
+                                    searchPlaceholder="Search by Pig ID..."
+                                    searchKey="pigId"
+                                    actionButtons={currentRecordsActions}
+                                    onAction={handleSellPig}
+                                />
                             )}
 
                             {selectedFilter === 'history' && (
                                 <div>
-                                    {/* Month Selection for History */}
                                     <div className="mb-4 flex items-center space-x-4">
-                                        <span className="text-sm font-medium text-gray-700">Filter by month:</span>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            Filter by month:
+                                        </span>
                                         <select
                                             value={selectedMonth}
-                                            onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                            onChange={(e) =>
+                                                setSelectedMonth(
+                                                    parseInt(e.target.value)
+                                                )
+                                            }
                                             className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
                                         >
                                             {months.map((month, index) => (
-                                                <option key={index} value={index}>{month}</option>
+                                                <option
+                                                    key={index}
+                                                    value={index}
+                                                >
+                                                    {month}
+                                                </option>
                                             ))}
                                         </select>
                                         <select
                                             value={selectedYear}
-                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                            onChange={(e) =>
+                                                setSelectedYear(
+                                                    parseInt(e.target.value)
+                                                )
+                                            }
                                             className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500"
                                         >
-                                            {[2023, 2024, 2025].map(year => (
-                                                <option key={year} value={year}>{year}</option>
+                                            {[2023, 2024, 2025].map((year) => (
+                                                <option
+                                                    key={year}
+                                                    value={year}
+                                                >
+                                                    {year}
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                                        Fattening History
-                                    </h3>
                                     <AdvancedTable
-                                        data={filteredHistoryRecords}
+                                        data={dataToShow}
                                         columns={historyRecordsColumns}
                                         searchPlaceholder="Search by Pig ID..."
                                         searchKey="pigId"
-                                        actionButtons={historyRecordsActions}
+                                        actionButtons={[]}
                                         onAction={() => { }}
                                     />
                                 </div>
@@ -437,7 +391,12 @@ const FatteningStage = () => {
                                     step="0.1"
                                     min="0"
                                     value={weightRange.min}
-                                    onChange={(e) => setWeightRange({ ...weightRange, min: e.target.value })}
+                                    onChange={(e) =>
+                                        setWeightRange({
+                                            ...weightRange,
+                                            min: e.target.value,
+                                        })
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                     placeholder="e.g., 30"
                                 />
@@ -452,7 +411,12 @@ const FatteningStage = () => {
                                     step="0.1"
                                     min="0"
                                     value={weightRange.max}
-                                    onChange={(e) => setWeightRange({ ...weightRange, max: e.target.value })}
+                                    onChange={(e) =>
+                                        setWeightRange({
+                                            ...weightRange,
+                                            max: e.target.value,
+                                        })
+                                    }
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                                     placeholder="e.g., 60"
                                 />
@@ -460,7 +424,9 @@ const FatteningStage = () => {
 
                             <div className="bg-gray-50 p-3 rounded-lg">
                                 <p className="text-sm text-gray-600">
-                                    Leave fields empty for no limit. For example, enter only minimum weight to find all pigs above that weight.
+                                    Leave fields empty for no limit. For
+                                    example, enter only minimum weight to find
+                                    all pigs above that weight.
                                 </p>
                             </div>
                         </div>

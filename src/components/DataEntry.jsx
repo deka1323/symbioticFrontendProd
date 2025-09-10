@@ -104,6 +104,7 @@ const DataEntry = ({ isOpen, onClose }) => {
                     farrowingData: {
                         mummyBorn: Number(formData.mummyBorn || 0),
                         liveBorn: Number(formData.liveBorn || 0),
+                        stillBorn: Number(formData.stillBorn || 0),
                         deathDuringFarrowing: Number(formData.deathDuringFarrowing || 0),
                         atw: Number(formData.atw || 0),
                         weaningCount: computed.weaningCount,

@@ -9,6 +9,8 @@ const initialState = {
   currentGestationRecords: [],
   gestationHistory: [],
   farrowingRecords: [],
+  fatteningRecords: [],
+  driedRecords: [],
   nurseryLitterRecords: [],
   currentNurseryRecords: [],
   nurseryHistory: [],
@@ -474,6 +476,65 @@ const pigReducer = (state = initialState, action) => {
       return {
         ...state,
         error: null,
+      };
+
+    // FATTENING
+    case PIG_ACTION_TYPES.FETCH_FATTENING_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FATTENING_RECORDS_SUCCESS:
+      return {
+        ...state,
+        fatteningRecords: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_FATTENING_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
+      };
+
+    case PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_START:
+      return {
+        ...state,
+        isMovingPig: true,
+        movingPigId: action.payload.fatteningId,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_SUCCESS: {
+      const { fatteningId, driedRecord } = action.payload;
+      const today = new Date().toISOString().split("T")[0];
+
+      const updatedFatteningRecords = state.fatteningRecords.map((record) =>
+        record.recordId === fatteningId
+          ? { ...record, outDate: today, status: "completed" }
+          : record
+      );
+
+      return {
+        ...state,
+        currentFatteningRecords: updatedFatteningRecords,
+        driedRecords: [...state.driedRecords, driedRecord],
+        isMovingPig: false,
+        movingPigId: null,
+        error: null,
+      };
+    }
+
+    case PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_FAILURE:
+      return {
+        ...state,
+        isMovingPig: false,
+        movingPigId: null,
+        error: action.payload.error,
       };
 
     default:

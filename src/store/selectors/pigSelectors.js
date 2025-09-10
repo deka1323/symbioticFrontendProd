@@ -30,6 +30,12 @@ export const selectCurrentFarrowingRecords = (state) =>
 export const selectFarrowingHistory = (state) =>
   state.pig.farrowingRecords.filter((record) => record.status === "completed");
 
+// fattening
+export const selectCurrentFatteningRecords = (state) =>
+  state.pig.farrowingRecords.filter((record) => record.status === "active");
+export const selectFatteningHistory = (state) =>
+  state.pig.farrowingRecords.filter((record) => record.status === "completed");
+
 // Nursery
 export const selectCurrentNurseryLitterRecords = (state) =>
   state.pig.nurseryLitterRecords.filter((record) => record.status === "active");
