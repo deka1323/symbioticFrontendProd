@@ -64,8 +64,9 @@ const DataEntry = ({ isOpen, onClose }) => {
         const liveBorn = Number(formData.liveBorn || 0);
         const deathDuringFarrowing = Number(formData.deathDuringFarrowing || 0);
 
+
         return {
-            totalBorn: stillBorn + mummyBorn + liveBorn,
+            totalBorn: stillBorn + mummyBorn + liveBorn + deathDuringFarrowing,
             weaningCount: liveBorn - deathDuringFarrowing,
         };
     }, [stage, formData]);
@@ -108,9 +109,14 @@ const DataEntry = ({ isOpen, onClose }) => {
                         deathDuringFarrowing: Number(formData.deathDuringFarrowing || 0),
                         atw: Number(formData.atw || 0),
                         weaningCount: computed.weaningCount,
+                        totalBorn: computed.totalBorn,
                     },
                 };
             }
+
+
+            // totalBorn: farrowingData.totalBorn,
+            // weaningCount: farrowingData.weaningCount,
 
             const data = await handler(payload);
             if (!data.success) {
