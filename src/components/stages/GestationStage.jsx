@@ -113,6 +113,7 @@ const GestationStage = () => {
     const currentRecordsColumns = [
         // { key: 'recordId', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
+        { key: 'breed', label: 'Breed', sortable: true },
         { key: 'inDate', label: 'In Date', sortable: true },
         {
             key: 'expectedExitDate',
@@ -126,28 +127,22 @@ const GestationStage = () => {
             sortable: true,
             render: (_, item) => `${calculateDaysInStage(item.inDate)} days`
         },
-        { key: 'breed', label: 'Breed', sortable: true },
     ];
 
     // History records table columns
     const historyRecordsColumns = [
         // { key: 'recordId', label: 'Record ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
+        { key: 'breed', label: 'Breed', sortable: true },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'outDate', label: 'Out Date', sortable: true },
         {
             key: 'totalDays',
             label: 'Total Days',
             sortable: true,
-            render: (value) => `${value} days`
+            render: (_, item) => `${calculateDaysInStage(item.inDate)} days`
         },
-        {
-            key: 'finalWeight',
-            label: 'Final Weight',
-            sortable: true,
-            render: (value) => `${value} kg`
-        },
-        { key: 'outcome', label: 'Outcome', sortable: false }
+
     ];
 
     // Action buttons for current records
@@ -327,11 +322,6 @@ const GestationStage = () => {
         </div>
     );
 
-    // return (
-    //     <div>
-    //         Chiman
-    //     </div>
-    // )
 };
 
 export default GestationStage;

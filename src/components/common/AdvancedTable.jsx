@@ -38,7 +38,7 @@ const AdvancedTable = ({
         if (searchTerm && filtered.length === 0) {
             toast.error(`No entries found for "${searchTerm}"`);
         } else if (searchTerm && filtered.length > 0) {
-            toast.success(`Found ${filtered.length} entries for "${searchTerm}"`);
+            // toast.success(`Found ${filtered.length} entries for "${searchTerm}"`);
         }
 
         return filtered;
@@ -286,8 +286,8 @@ const AdvancedTable = ({
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
                                         className={`px-3 py-1 border rounded-md text-sm ${currentPage === pageNum
-                                                ? 'bg-blue-600 text-white border-blue-600'
-                                                : 'border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-blue-600 text-white border-blue-600'
+                                            : 'border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         {pageNum}

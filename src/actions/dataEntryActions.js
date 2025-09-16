@@ -122,3 +122,39 @@ export const entryFarrowingRecord = async (farrowingData) => {
     return { success: false, data: err.message };
   }
 };
+
+export const entryNurseryRecord = async (nurseryData) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    console.log("nurseryData ---->", nurseryData);
+
+    const response = await fetch(`${API_BASE_URL}/dataEntry/nursery`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(nurseryData),
+    });
+
+    // parse JSON once
+    const responseData = await response.json();
+    console.log("Raw response data ->", responseData);
+
+    if (!response.ok) {
+      console.log("Create nursery record error -> ", responseData);
+      return {
+        success: false,
+        data: responseData.message || "Failed to nursery record",
+      };
+    }
+
+    console.log("Create nursery record data -> ", responseData);
+    return { success: true, data: responseData.data };
+  } catch (err) {
+    console.log("error ->", err);
+    return { success: false, data: err.message };
+  }
+};

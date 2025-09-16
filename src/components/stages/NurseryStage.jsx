@@ -224,7 +224,7 @@ const NurseryStage = () => {
                 </button>
             )
         },
-        { key: 'litterId', label: 'Litter ID', sortable: true },
+        // { key: 'litterId', label: 'Litter ID', sortable: true },
         {
             key: 'sowId',
             label: 'Parents',
