@@ -19,6 +19,12 @@ import {
     currentFarmRecord
 } from '../../store/selectors/pigSelectors';
 
+const Loader = () => (
+    <div className="flex justify-center items-center py-10">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600"></div>
+    </div>
+);
+
 const GestationStage = () => {
     const dispatch = useDispatch();
     const [selectedFilter, setSelectedFilter] = useState('current');
@@ -261,14 +267,19 @@ const GestationStage = () => {
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Active Gestation Records
                                     </h3>
-                                    <AdvancedTable
-                                        data={currentGestation}
-                                        columns={currentRecordsColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="pigId"
-                                        actionButtons={currentRecordsActions}
-                                        onAction={handleAction}
-                                    />
+
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={currentGestation}
+                                            columns={currentRecordsColumns}
+                                            searchPlaceholder="Search by Pig ID..."
+                                            searchKey="pigId"
+                                            actionButtons={currentRecordsActions}
+                                            onAction={handleAction}
+                                        />
+                                    )}
                                 </div>
                             )}
 
@@ -305,14 +316,18 @@ const GestationStage = () => {
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Gestation History
                                     </h3>
-                                    <AdvancedTable
-                                        data={filteredHistoryRecords}
-                                        columns={historyRecordsColumns}
-                                        searchPlaceholder={`Search within ${months[selectedMonth]} ${selectedYear} data...`}
-                                        searchKey="pigId"
-                                        actionButtons={historyRecordsActions}
-                                        onAction={() => { }}
-                                    />
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={filteredHistoryRecords}
+                                            columns={historyRecordsColumns}
+                                            searchPlaceholder={`Search within ${months[selectedMonth]} ${selectedYear} data...`}
+                                            searchKey="pigId"
+                                            actionButtons={historyRecordsActions}
+                                            onAction={() => { }}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </div>

@@ -15,8 +15,15 @@ import {
     selectCurrentFarrowingRecords,
     selectFarrowingHistory,
     selectIsMovingPig,
+    selectIsLoading,
     selectMovingPigId
 } from '../../store/selectors/pigSelectors';
+
+const Loader = () => (
+    <div className="flex justify-center items-center py-10">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-600"></div>
+    </div>
+);
 
 const FarrowingStage = () => {
     const dispatch = useDispatch();
@@ -56,7 +63,7 @@ const FarrowingStage = () => {
     const selectedFarm = useSelector(currentFarmRecord);
 
     console.log("Current selected Farm -", selectedFarm)
-
+    const isLoading = useSelector(selectIsLoading);
 
     useEffect(() => {
         if (selectedFilter === 'current') {
@@ -312,16 +319,18 @@ const FarrowingStage = () => {
                                     <p className="text-sm text-gray-600 mb-4">
                                         Click on any row to edit farrowing details
                                     </p>
-                                    <AdvancedTable
-                                        data={currentFarrowingRecords}
-                                        columns={currentRecordsColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="pigId"
-                                        actionButtons={currentRecordsActions}
-                                        onAction={handleAction}
-                                    // onRowClick={handleRowClick}
-                                    // rowClickable={true}
-                                    />
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={currentFarrowingRecords}
+                                            columns={currentRecordsColumns}
+                                            searchPlaceholder="Search by Pig ID..."
+                                            searchKey="pigId"
+                                            actionButtons={currentRecordsActions}
+                                            onAction={handleAction}
+                                        />
+                                    )}
                                 </div>
                             )}
 
@@ -349,17 +358,20 @@ const FarrowingStage = () => {
                                             ))}
                                         </select>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-4"> </h3>
                                         Farrowing History
-                                    </h3>
-                                    <AdvancedTable
-                                        data={farrowingHistoryRecords}
-                                        columns={historyRecordsColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="pigId"
-                                        actionButtons={historyRecordsActions}
-                                        onAction={() => { }}
-                                    />
+                                        {isLoading ? (
+                                            <Loader />
+                                        ) : (
+                                            <AdvancedTable
+                                                data={farrowingHistoryRecords}
+                                                columns={historyRecordsColumns}
+                                                searchPlaceholder="Search by Pig ID..."
+                                                searchKey="pigId"
+                                                actionButtons={historyRecordsActions}
+                                                onAction={() => { }}
+                                            />
+                                        )}
                                 </div>
                             )}
                         </div>

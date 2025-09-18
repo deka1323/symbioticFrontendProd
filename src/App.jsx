@@ -37,6 +37,7 @@ function App() {
           element={
             user ? (
               <div className="min-h-screen bg-gray-50">
+            
                 <Navigation />
                 <main className="pb-8">
                   <Routes>

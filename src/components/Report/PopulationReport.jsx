@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BarChart3, TrendingUp, Download, FileText } from "lucide-react";
+import { BarChart3, TrendingUp, Download, FileText, PiggyBank } from "lucide-react";
 import { getPigPopulationReports } from "../../actions/reportActions";
 import { fetchCurrentFarm } from "../../store/actions/pigActions";
 import { useDispatch, useSelector } from "react-redux";
@@ -108,19 +108,16 @@ const PopulationReport = ({ showDetails }) => {
     };
 
     return (
-        // <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="bg-white border border-gray-200 rounded-md p-4">
             {/* Header */}
             <div className="flex justify-between items-center mb-8">
-                {/*                 <h3 className="text-2xl font-bold text-gray-900 flex items-center"> */}
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                    <BarChart3 className="h-7 w-7 text-blue-600 mr-2" />
-                    Pig Population Report
+                <h3 className="text-lg font-semibold text-blue-800 flex items-center">
+                    <PiggyBank className="h-7 w-7 text-blue-600 mr-2" />
+                    Pig Population Summary
                 </h3>
                 <button
                     onClick={() => downloadCSV([stats], "population-report")}
-                    // className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-xl hover:opacity-90 transition" 
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 text-sm rounded-md hover:bg-blue-700 transition"
+                    className="flex items-center gap-2 bg-blue-500 text-white px-4 py-2 text-sm rounded-md hover:bg-blue-700 transition"
                 >
                     <Download className="h-4 w-4" />
                     <span>Export CSV</span>
@@ -128,107 +125,98 @@ const PopulationReport = ({ showDetails }) => {
             </div>
 
             {/* Stat Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Total */}
-                <div
-                    // className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 hover:shadow-md cursor-pointer transition" 
-                    className="bg-gradient-to-br from-blue-50 to-blue-100 border border-gray-200 rounded-md p-4 hover:shadow-sm cursor-pointer transition"
-                    onClick={() => showDetails("total", "Total Pigs")}
-                >
-                    <div className="flex items-center">
-                        <BarChart3 className="h-10 w-10 text-blue-600" />
-                        <div className="ml-4">
-                            <div className="text-sm font-medium text-blue-700">Total Pigs</div>
-                            {/*                             <div className="text-3xl font-extrabold text-blue-900">{stats.total}</div> */}
-                            <div className="text-xl font-semibold text-blue-900">{stats.total}</div>
+            <div className="grid grid-cols-1 gap-4">
+                {/* Total Pigs centered */}
+                <div className="md:flex md:justify-center">
+                    <div
+                        className="bg-blue-50 border border-gray-200 rounded-md p-3 hover:shadow-sm cursor-pointer transition w-full md:w-1/3"
+                        onClick={() => showDetails("total", "Total Pigs")}
+                    >
+                        <div className="flex flex-col items-center justify-center">
+                            <div className="text-center">
+                                <div className="text-sm font-medium text-blue-700">Total Pigs</div>
+                                <div className="text-lg font-semibold text-blue-900">{stats.total}</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Male */}
-                <div
-                    className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 hover:shadow-md cursor-pointer transition"
-                    onClick={() => showDetails("male", "Male Pigs")}
-                >
-                    <div className="flex items-center">
-                        <TrendingUp className="h-10 w-10 text-green-600" />
-                        <div className="ml-4">
+                {/* Male & Female side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Male */}
+                    <div
+                        className="bg-green-50 border border-gray-200 rounded-md p-3 hover:shadow-sm cursor-pointer transition flex flex-col items-center justify-center"
+                        onClick={() => showDetails("male", "Male Pigs")}
+                    >
+                        <div className="text-center">
                             <div className="text-sm font-medium text-green-700">Male</div>
-                            {/*                             <div className="text-3xl font-extrabold text-green-900">{stats.male.total}</div> */}
-                            <div className="text-xl font-semibold text-green-900">{stats.male.total}</div>
+                            <div className="text-lg font-semibold text-green-900">{stats.male.total}</div>
                         </div>
                     </div>
-                </div>
 
-                {/* Female */}
-                <div
-                    className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-5 hover:shadow-md cursor-pointer transition"
-                    onClick={() => showDetails("female", "Female Pigs")}
-                >
-                    <div className="flex items-center">
-                        <FileText className="h-10 w-10 text-pink-600" />
-                        <div className="ml-4">
+                    {/* Female */}
+                    <div
+                        className="bg-pink-50 border border-gray-200 rounded-md p-3 hover:shadow-sm cursor-pointer transition flex flex-col items-center justify-center"
+                        onClick={() => showDetails("female", "Female Pigs")}
+                    >
+                        <div className="text-center">
                             <div className="text-sm font-medium text-pink-700">Female</div>
-                            {/*                             <div className="text-3xl font-extrabold text-pink-900">{stats.female.total}</div> */}
-                            <div className="text-xl font-semibold text-pink-900">{stats.female.total}</div>
+                            <div className="text-lg font-semibold text-pink-900">{stats.female.total}</div>
                         </div>
                     </div>
                 </div>
             </div>
-
             {/* Male vs Female Breeds Comparison */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
                 {/* Male Breeds */}
-                <div className="bg-white border rounded-xl shadow p-6">
-                    <div className="flex items-center mb-4">
-                        <div className="h-10 w-10 flex items-center justify-center bg-green-100 text-green-700 rounded-full">
+                <div className="border border-green-200 rounded-xl p-4">
+                    <div className="flex items-center mb-3">
+                        <div className="h-8 w-8 flex items-center justify-center border border-green-500 text-green-700 rounded-full">
                             ♂
                         </div>
-                        <h4 className="ml-3 text-lg font-semibold text-gray-900">
-                            Male Breeds Distribution
+                        <h4 className="ml-2 text-base font-semibold text-gray-900">
+                            Male Breed Distribution
                         </h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {Object.entries(stats.male.breeds).map(([breed, count]) => (
                             <div
                                 key={`male-${breed}`}
-                                //   className="bg-green-50 rounded-lg p-4 cursor-pointer hover:bg-green-100 transition" 
-                                className="bg-green-50 border border-gray-200 rounded-md p-3 cursor-pointer hover:bg-green-100 transition"
+                                className="border border-green-500 rounded-md p-2 text-center cursor-pointer hover:shadow-sm transition"
                                 onClick={() => showDetails(`male-${breed.toLowerCase()}`, `Male ${breed}`)}
                             >
-                                <div className="text-sm font-medium text-green-700">{breed}</div>
-                                {/*                                 <div className="text-xl font-bold text-green-900">{count}</div> */}
-                                <div className="text-base font-semibold text-green-900">{count}</div>
+                                <div className="text-xs font-medium text-green-700">{breed}</div>
+                                <div className="text-sm font-semibold text-green-900">{count}</div>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Female Breeds */}
-                <div className="bg-white border rounded-xl shadow p-6">
-                    <div className="flex items-center mb-4">
-                        <div className="h-10 w-10 flex items-center justify-center bg-pink-100 text-pink-700 rounded-full">
+                <div className="border border-pink-200 rounded-xl p-4">
+                    <div className="flex items-center mb-3">
+                        <div className="h-8 w-8 flex items-center justify-center border border-pink-500 text-pink-700 rounded-full">
                             ♀
                         </div>
-                        <h4 className="ml-3 text-lg font-semibold text-gray-900">
-                            Female Breeds Distribution
+                        <h4 className="ml-2 text-base font-semibold text-gray-900">
+                            Female Breed Distribution
                         </h4>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {Object.entries(stats.female.breeds).map(([breed, count]) => (
                             <div
                                 key={`female-${breed}`}
-                                className="bg-pink-50 rounded-lg p-4 cursor-pointer hover:bg-pink-100 transition"
+                                className="border border-pink-500 rounded-md p-2 text-center cursor-pointer hover:shadow-sm transition"
                                 onClick={() => showDetails(`female-${breed.toLowerCase()}`, `Female ${breed}`)}
                             >
-                                <div className="text-sm font-medium text-pink-700">{breed}</div>
-                                {/*                                 <div className="text-xl font-bold text-pink-900">{count}</div> */}
-                                <div className="text-base font-semibold text-pink-900">{count}</div>
+                                <div className="text-xs font-medium text-pink-700">{breed}</div>
+                                <div className="text-sm font-semibold text-pink-900">{count}</div>
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+
         </div>
     );
 };
