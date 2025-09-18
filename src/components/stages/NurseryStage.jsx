@@ -213,10 +213,10 @@ const NurseryStage = () => {
             label: '',
             render: (value, item) => (
                 <button
-                    onClick={() => toggleRowExpansion(item.id)}
+                    onClick={() => toggleRowExpansion(item.recordId)}
                     className="text-green-600 hover:text-green-800"
                 >
-                    {expandedRows[item.id] ? (
+                    {expandedRows[item.recordId] ? (
                         <ChevronDown className="h-4 w-4" />
                     ) : (
                         <ChevronRight className="h-4 w-4" />
@@ -226,7 +226,7 @@ const NurseryStage = () => {
         },
         // { key: 'litterId', label: 'Litter ID', sortable: true },
         {
-            key: 'sowId',
+            key: 'pigId',
             label: 'Parents',
             sortable: true,
             render: (value, item) => (
@@ -238,21 +238,21 @@ const NurseryStage = () => {
         },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'weaningDate', label: 'Weaning Date', sortable: true },
-        { key: 'totalPiglets', label: 'Total Piglets', sortable: true },
+        { key: 'weaningCount', label: 'Total Piglets', sortable: true },
     ];
 
     // History records table columns
     const nurseredRecordsColumns = [
-        { key: 'recordId', label: 'Nursery ID', sortable: true },
+        // { key: 'recordId', label: 'Nursery ID', sortable: true },
         { key: 'pigId', label: 'Pig ID', sortable: true },
         {
-            key: 'sowId',
+            key: 'motherId',
             label: 'Parents',
             sortable: true,
             render: (value, item) => (
                 <div>
                     <div className="text-sm text-gray-900">Sow: {value}</div>
-                    <div className="text-sm text-gray-500">Boar: {item.boarId}</div>
+                    <div className="text-sm text-gray-500">Boar: {item.fatherId}</div>
                 </div>
             )
         },
@@ -288,7 +288,7 @@ const NurseryStage = () => {
 
     // Custom row renderer for expanded piglet details
     const renderExpandedRow = (item) => {
-        if (!expandedRows[item.id]) return null;
+        if (!expandedRows[item.recordId]) return null;
 
         return (
             <tr key={`${item.id}-expanded`}>

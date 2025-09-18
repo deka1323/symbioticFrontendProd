@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   TrendingUp,
   Users,
   GitBranch,
   LayoutList,
   X,
+  PieChart,
+  Split,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdvancedTable from "../common/AdvancedTable";
@@ -13,28 +15,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { currentFarmRecord } from "../../store/selectors/pigSelectors";
 import { fetchCurrentFarm } from "../../store/actions/pigActions";
 
-// Dummy stages
+// --- CONFIGURATION ---
 const STAGES = [
-  { key: "breeding", label: "Service" },
-  { key: "gestation", label: "Gestation" },
-  { key: "farrowing", label: "Farrowing" },
-  { key: "nursery", label: "Nursery" },
-  { key: "dried", label: "Dried" },
-  { key: "fattening", label: "Fattening" },
+  { key: "breeding", label: "Service", icon: TrendingUp },
+  { key: "gestation", label: "Gestation", icon: TrendingUp },
+  { key: "farrowing", label: "Farrowing", icon: TrendingUp },
+  { key: "nursery", label: "Nursery", icon: TrendingUp },
+  { key: "dried", label: "Dried", icon: TrendingUp },
+  { key: "fattening", label: "Fattening", icon: TrendingUp },
 ];
 
-// Dummy fallback
-// const fetchDataFallback = async (stage) => {
-//   const sample = [
-//     { pigId: "P-001", sex: "Male", breed: "Landrace", currentStage: stage },
-//     { pigId: "P-002", sex: "Female", breed: "Yorkshire", currentStage: stage },
-//     { pigId: "P-003", sex: "Male", breed: "Duroc", currentStage: stage },
-//     { pigId: "P-004", sex: "Female", breed: "Hampshire", currentStage: stage },
-//     { pigId: "P-005", sex: "Male", breed: "Yorkshire", currentStage: stage },
-//   ];
-//   return sample;
-// };
+const sowOnlyStages = ["breeding", "gestation", "farrowing", "dried"];
 
+// --- HELPER FUNCTIONS ---
 const norm = (v) => (typeof v === "string" ? v.trim().toLowerCase() : v);
 
 function buildStats(pigs) {
@@ -64,47 +57,91 @@ function buildStats(pigs) {
   return { total, sex, breed, sexBreed };
 }
 
+// --- REUSABLE UI COMPONENTS ---
+
 const Pill = ({ children, onClick, tone = "neutral", title }) => {
   const tones = {
-    neutral:
-      "bg-white text-gray-700 border border-gray-200 hover:border-gray-300",
-    primary:
-      "bg-blue-50 text-blue-700 border border-blue-100 hover:border-blue-200",
-    success:
-      "bg-emerald-50 text-emerald-700 border border-emerald-100 hover:border-emerald-200",
-    rose: "bg-rose-50 text-rose-700 border border-rose-100 hover:border-rose-200",
-    amber:
-      "bg-amber-50 text-amber-800 border border-amber-100 hover:border-amber-200",
-    violet:
-      "bg-violet-50 text-violet-700 border border-violet-100 hover:border-violet-200",
+    neutral: "bg-gray-100 text-gray-800 hover:bg-gray-200",
+    primary: "bg-blue-100 text-blue-800 hover:bg-blue-200",
+    success: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200",
+    rose: "bg-rose-100 text-rose-800 hover:bg-rose-200",
+    amber: "bg-amber-100 text-amber-800 hover:bg-amber-200",
+    violet: "bg-violet-100 text-violet-800 hover:bg-violet-200",
   };
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${tones[tone]}`}
+      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors duration-200 ${tones[tone]}`}
     >
       {children}
     </button>
   );
 };
 
-const StageCard = ({ label, children }) => (
-  <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50/50 to-white shadow-sm p-5">
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center gap-2">
-        <div className="h-9 w-9 flex items-center justify-center rounded-xl bg-purple-100 text-purple-700">
-          <TrendingUp className="h-5 w-5" />
-        </div>
-        <h4 className="text-base md:text-lg font-semibold text-gray-900">
-          {label}
-        </h4>
+const StageMasterCard = ({ label, icon: Icon, children }) => (
+  <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+    <div className="flex items-center gap-3 p-4 border-b border-gray-100 bg-gray-50/50">
+      <div className="h-10 w-10 flex items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+        <Icon className="h-5 w-5" />
       </div>
+      <h3 className="text-lg font-bold text-gray-800">{label}</h3>
     </div>
-    {children}
+    <div className="p-4 md:p-5">{children}</div>
   </div>
 );
+
+// New component to group pills into a card-like element
+const StatPillGroup = ({ icon: Icon, title, children, iconColor = "text-gray-500" }) => (
+  <div className="flex-1 rounded-xl border border-gray-200 bg-white p-4 min-w-[280px] shadow-sm">
+    <div className="flex items-center gap-2 mb-3">
+      <Icon className={`h-4 w-4 ${iconColor}`} />
+      <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wider">
+        {title}
+      </h4>
+    </div>
+    <div className="flex flex-wrap gap-2">{children}</div>
+  </div>
+);
+
+
+const StatCard = ({ value, label, sublabel, onClick, tone = "primary" }) => {
+  const tones = {
+    primary: {
+      bg: "bg-blue-50 hover:border-blue-200",
+      border: "border-blue-100",
+      value: "text-blue-900",
+    },
+    success: {
+      bg: "bg-emerald-50 hover:border-emerald-200",
+      border: "border-emerald-100",
+      value: "text-emerald-900",
+    },
+    rose: {
+      bg: "bg-rose-50 hover:border-rose-200",
+      border: "border-rose-100",
+      value: "text-rose-900",
+    },
+  };
+  const selectedTone = tones[tone];
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={!onClick}
+      className={`p-4 rounded-xl border transition-all duration-200 text-left flex-1 min-w-[160px] ${selectedTone.bg
+        } ${selectedTone.border} ${onClick ? "cursor-pointer shadow-sm hover:shadow-md" : ""
+        }`}
+    >
+      <p className="text-xs font-medium text-gray-500">{label}</p>
+      <p className={`text-3xl font-bold mt-1 ${selectedTone.value}`}>{value}</p>
+      {sublabel && (
+        <p className="text-xs text-gray-400 mt-1">{sublabel}</p>
+      )}
+    </button>
+  );
+};
 
 const columns = [
   { key: "pigId", label: "Pig ID", sortable: true },
@@ -113,35 +150,35 @@ const columns = [
   { key: "stageName", label: "Stage", sortable: true },
 ];
 
+// --- MAIN COMPONENT ---
+
 export default function StageDistributionReport() {
   const dispatch = useDispatch();
   const [stageData, setStageData] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
   const [tableTitle, setTableTitle] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const selectedFarm = useSelector(currentFarmRecord);
 
   useEffect(() => {
+    dispatch(fetchCurrentFarm());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!selectedFarm) return;
     let mounted = true;
     (async () => {
       const results = await Promise.all(
         STAGES.map(({ key }) => getAllPigsByStage(selectedFarm, key))
       );
-
-      console.log("results ::::", results)
       const mapped = {};
-      STAGES.forEach(({ key }, i) => (mapped[key] = results[i].data || []));
+      STAGES.forEach(({ key }, i) => (mapped[key] = results[i]?.data || []));
       if (mounted) setStageData(mapped);
     })();
     return () => {
       mounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    dispatch(fetchCurrentFarm());
-  }, [dispatch])
-
-  const selectedFarm = useSelector(currentFarmRecord);
+  }, [selectedFarm]);
 
   const grandTotal = useMemo(
     () =>
@@ -153,291 +190,197 @@ export default function StageDistributionReport() {
   );
 
   const showTable = (rows, title) => {
-    let tableItems = Array.isArray(rows) ? rows : [];
-    // const updatedTableItems = tableItems.map((item) => {
-    //   () => {
-    //     return (
-    //       ((item.stageName === "gestation") || (item.stageName === "farrowing") || (item.stageName === "dried") || (item.stageName === "breeding")) ?
-    //         {
-    //           ...item,
-    //           sex: "female"
-    //         } : item
-    //     )
-    //   }
-    // })
-
+    const tableItems = Array.isArray(rows) ? rows : [];
     const updatedTableItems = tableItems.map((item) => {
-      if (
-        item.stageName === "gestation" ||
-        item.stageName === "farrowing" ||
-        item.stageName === "dried" ||
-        item.stageName === "breeding"
-      ) {
-        return {
-          ...item,
-          sex: "female",
-        };
+      if (sowOnlyStages.includes(item.stageName)) {
+        return { ...item, sex: "Female" };
       }
       return item;
     });
-
-    console.log("TABLE ITEMS ", tableItems),
-      console.log("updatedTableItems ", updatedTableItems)
     setSelectedRows(updatedTableItems);
     setTableTitle(title);
     setIsModalOpen(true);
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-6 w-6 text-purple-600" />
-          <h3 className="text-xl md:text-2xl font-bold text-gray-900">
+    <div className="bg-gray-50/75 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
             Stage Distribution Report
-          </h3>
+          </h2>
+          <p className="mt-1 text-gray-500">
+            A detailed breakdown of the pig population across different stages.
+          </p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        {STAGES.map(({ key, label }) => {
-          const pigs = stageData[key] || [];
-          const stats = buildStats(pigs);
-          const pct = grandTotal
-            ? ((stats.total / grandTotal) * 100).toFixed(1)
-            : 0;
+        <div className="space-y-8">
+          {STAGES.map(({ key, label, icon }) => {
+            const pigs = stageData[key] || [];
+            const stats = buildStats(pigs);
+            const isSowOnly = sowOnlyStages.includes(key);
+            const pct = grandTotal
+              ? ((stats.total / grandTotal) * 100).toFixed(1)
+              : 0;
 
-          const maleCount = stats.sex?.Male || stats.sex?.male || 0;
-          const femaleCount = stats.sex?.Female || stats.sex?.female || 0;
-          const breedEntries = Object.entries(stats.breed || {}).sort(
-            (a, b) => b[1] - a[1]
-          );
+            const breedEntries = Object.entries(stats.breed || {}).sort(
+              (a, b) => b[1] - a[1]
+            );
 
-          return (
-            <StageCard key={key} label={label}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {/* Total */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-blue-700">
-                      Total
-                    </span>
+            const hasSexBreedData =
+              Object.keys(stats.sexBreed?.Male || stats.sexBreed?.male || {}).length > 0 ||
+              Object.keys(stats.sexBreed?.Female || stats.sexBreed?.female || {}).length > 0;
+
+
+            if (stats.total === 0) {
+              return (
+                <StageMasterCard key={key} label={label} icon={icon}>
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No pigs in this stage.</p>
                   </div>
-                  <div className="text-2xl font-bold text-gray-900 leading-none">
-                    {stats.total}
-                  </div>
-                  <div className="text-[11px] text-gray-500 mt-1">
-                    {pct}% of all pigs
-                  </div>
-                  <div className="mt-3">
-                    <Pill
-                      tone="primary"
-                      title="View all"
-                      onClick={() => showTable(pigs, `${label} · All pigs`)}
-                    >
-                      View all pigs
-                    </Pill>
-                  </div>
+                </StageMasterCard>
+              )
+            }
+
+            return (
+              <StageMasterCard key={key} label={label} icon={icon}>
+                <div className="flex flex-wrap gap-4">
+                  {/* --- STAT CARDS --- */}
+                  <StatCard
+                    label="Total Pigs"
+                    value={stats.total}
+                    sublabel={`${pct}% of farm total`}
+                    onClick={() => showTable(pigs, `${label} · All pigs`)}
+                    tone="primary"
+                  />
+
+                  {!isSowOnly && (
+                    <>
+                      <StatCard
+                        label="Male"
+                        value={stats.sex?.Male || stats.sex?.male || 0}
+                        onClick={() => showTable(pigs.filter(p => norm(p.sex) === 'male'), `${label} · Male`)}
+                        tone="success"
+                      />
+                      <StatCard
+                        label="Female"
+                        value={stats.sex?.Female || stats.sex?.female || 0}
+                        onClick={() => showTable(pigs.filter(p => norm(p.sex) === 'female'), `${label} · Female`)}
+                        tone="rose"
+                      />
+                    </>
+                  )}
+
+                  {/* --- PILL GROUP CARDS --- */}
+
+                  {breedEntries.length > 0 && (
+                    <StatPillGroup icon={GitBranch} title="By Breed" iconColor="text-amber-600">
+                      {breedEntries.map(([b, c]) => (
+                        <Pill
+                          key={b}
+                          tone="amber"
+                          title={`Filter ${b}`}
+                          onClick={() => showTable(pigs.filter(p => norm(p.breed) === norm(b)), `${label} · Breed: ${b}`)}
+                        >
+                          {b} &middot; {c}
+                        </Pill>
+                      ))}
+                    </StatPillGroup>
+                  )}
+
+                  {!isSowOnly && hasSexBreedData && (
+                    <StatPillGroup icon={Split} title="By Sex & Breed" iconColor="text-violet-600">
+                      <div className="w-full space-y-4">
+                        {/* Male Section */}
+                        <div>
+                          <p className="text-xs font-bold text-emerald-700 mb-2">MALE</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(stats.sexBreed?.Male || stats.sexBreed?.male || {}).length === 0 ? (
+                              <span className="text-xs text-gray-400">No data</span>
+                            ) : (
+                              Object.entries(stats.sexBreed?.Male || stats.sexBreed?.male || {}).map(([b, c]) => (
+                                <Pill
+                                  key={`m-${b}`}
+                                  tone="success"
+                                  onClick={() => showTable(pigs.filter(p => norm(p.sex) === 'male' && norm(p.breed) === norm(b)), `${label} · Male · ${b}`)}
+                                >
+                                  {b} &middot; {c}
+                                </Pill>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                        {/* Female Section */}
+                        <div>
+                          <p className="text-xs font-bold text-rose-700 mb-2">FEMALE</p>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(stats.sexBreed?.Female || stats.sexBreed?.female || {}).length === 0 ? (
+                              <span className="text-xs text-gray-400">No data</span>
+                            ) : (
+                              Object.entries(stats.sexBreed?.Female || stats.sexBreed?.female || {}).map(([b, c]) => (
+                                <Pill
+                                  key={`f-${b}`}
+                                  tone="rose"
+                                  onClick={() => showTable(pigs.filter(p => norm(p.sex) === 'female' && norm(p.breed) === norm(b)), `${label} · Female · ${b}`)}
+                                >
+                                  {b} &middot; {c}
+                                </Pill>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </StatPillGroup>
+                  )}
                 </div>
+              </StageMasterCard>
+            );
+          })}
+        </div>
 
-                {/* By Sex */}
-                {(key !== "gestation") && (key !== "farrowing") && (key !== "dried") && (key !== "breeding") && <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <LayoutList className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                      By Sex
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Pill
-                      tone="success"
-                      title="Filter male"
-                      onClick={() =>
-                        showTable(
-                          pigs.filter((p) => norm(p.sex) === "male"),
-                          `${label} · Male`
-                        )
-                      }
-                    >
-                      ♂ Male · {maleCount}
-                    </Pill>
-                    <Pill
-                      tone="rose"
-                      title="Filter female"
-                      onClick={() =>
-                        showTable(
-                          pigs.filter((p) => norm(p.sex) === "female"),
-                          `${label} · Female`
-                        )
-                      }
-                    >
-                      ♀ Female · {femaleCount}
-                    </Pill>
-                  </div>
-                </div>}
-
-                {/* By Breed */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow col-span-full">
-                  <div className="flex items-center gap-2 text-gray-600 mb-3">
-                    <GitBranch className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-amber-700">
-                      By Breed
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {breedEntries.length === 0 && (
-                      <span className="text-xs text-gray-500">
-                        No breeds available
-                      </span>
-                    )}
-                    {breedEntries.map(([b, c]) => (
-                      <Pill
-                        key={b}
-                        tone="amber"
-                        title={`Filter ${b}`}
-                        onClick={() =>
-                          showTable(
-                            pigs.filter((p) => norm(p.breed) === norm(b)),
-                            `${label} · Breed: ${b}`
-                          )
-                        }
-                      >
-                        {b} · {c}
-                      </Pill>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Sex × Breed */}
-                {(key !== "gestation") && (key !== "farrowing") && (key !== "dried") && (key !== "breeding") && <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow col-span-full">
-                  <div className="flex items-center gap-2 text-gray-600 mb-3">
-                    <LayoutList className="h-4 w-4 text-violet-600" />
-                    <span className="text-xs font-semibold uppercase tracking-wide text-violet-700">
-                      Sex × Breed
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <div className="text-[11px] font-semibold text-emerald-700 mb-2">
-                        Male
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(
-                          stats.sexBreed?.Male || stats.sexBreed?.male || {}
-                        ).length === 0 && (
-                            <span className="text-xs text-gray-400">No data</span>
-                          )}
-                        {Object.entries(
-                          stats.sexBreed?.Male || stats.sexBreed?.male || {}
-                        ).map(([b, c]) => (
-                          <Pill
-                            key={`m-${b}`}
-                            tone="success"
-                            title={`Male · ${b}`}
-                            onClick={() =>
-                              showTable(
-                                pigs.filter(
-                                  (p) =>
-                                    norm(p.sex) === "male" &&
-                                    norm(p.breed) === norm(b)
-                                ),
-                                `${label} · Male · ${b}`
-                              )
-                            }
-                          >
-                            {b} · {c}
-                          </Pill>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-semibold text-rose-700 mb-2">
-                        Female
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(
-                          stats.sexBreed?.Female ||
-                          stats.sexBreed?.female ||
-                          {}
-                        ).length === 0 && (
-                            <span className="text-xs text-gray-400">No data</span>
-                          )}
-                        {Object.entries(
-                          stats.sexBreed?.Female ||
-                          stats.sexBreed?.female ||
-                          {}
-                        ).map(([b, c]) => (
-                          <Pill
-                            key={`f-${b}`}
-                            tone="rose"
-                            title={`Female · ${b}`}
-                            onClick={() =>
-                              showTable(
-                                pigs.filter(
-                                  (p) =>
-                                    norm(p.sex) === "female" &&
-                                    norm(p.breed) === norm(b)
-                                ),
-                                `${label} · Female · ${b}`
-                              )
-                            }
-                          >
-                            {b} · {c}
-                          </Pill>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>}
-              </div>
-            </StageCard>
-          );
-        })}
-      </div>
-
-      {/* Full-screen Modal for Table */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
+        {/* Full-screen Modal for Table */}
+        <AnimatePresence>
+          {isModalOpen && (
             <motion.div
-              className="bg-white rounded-2xl shadow-lg w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                  <LayoutList className="h-5 w-5 text-gray-600" />
-                  <h4 className="text-lg font-semibold text-gray-900">
-                    {tableTitle}
-                  </h4>
+              <motion.div
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              >
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center gap-3">
+                    <LayoutList className="h-5 w-5 text-gray-500" />
+                    <h4 className="text-lg font-semibold text-gray-800">
+                      {tableTitle}
+                    </h4>
+                  </div>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="h-5 w-5 text-gray-600" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5 text-gray-500" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                <AdvancedTable
-                  data={selectedRows}
-                  columns={columns}
-                  searchPlaceholder="Search by Pig ID, Breed, or Sex..."
-                  searchKey="pigId"
-                />
-              </div>
+                <div className="flex-1 overflow-y-auto p-2">
+                  <AdvancedTable
+                    data={selectedRows}
+                    columns={columns}
+                    searchPlaceholder="Search by Pig ID, Breed, or Sex..."
+                    searchKey="pigId"
+                  />
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
