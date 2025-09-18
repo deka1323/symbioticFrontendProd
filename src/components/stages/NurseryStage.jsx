@@ -205,6 +205,23 @@ const NurseryStage = () => {
         }));
     };
 
+    const isAnyBasicFieldMissing = (piglet) =>
+        [piglet.pigId, piglet.sex, piglet.breed].some(
+            (val) =>
+                val === undefined ||
+                val === null ||
+                (typeof val === "string" && val.trim() === "")
+        );
+
+    // Utility function to check if any of the required fields are present/non-empty
+    const isAnyBasicFieldPresent = (piglet) =>
+        [piglet.pigId, piglet.sex, piglet.breed].some(
+            (val) =>
+                val !== undefined &&
+                val !== null &&
+                (typeof val !== "string" || val.trim() !== "")
+        );
+
 
     // Current records table columns
     const currentRecordsColumns = [
@@ -321,14 +338,18 @@ const NurseryStage = () => {
                                             <td className="px-3 py-2 text-sm text-gray-900">{piglet.breed}</td>
                                             <td className="px-3 py-2 text-sm text-gray-900">{piglet.csfDate || 'Not given'}</td>
                                             <td className="px-3 py-2 text-sm text-gray-900">
-                                                {piglet.otherVaccinationName ? `${piglet.otherVaccinationName} (${piglet.otherVaccination})` : 'Not given'}
+                                                {piglet.otherVaccinationName ? `${piglet.otherVaccinationName} (${piglet.otherVaccinationDate})` : 'Not given'}
                                             </td>
                                             <td className="px-3 py-2 text-sm text-gray-900">
                                                 <div className="flex space-x-2">
                                                     <button
                                                         onClick={() => handleEditBasicInfo(piglet, item)}
                                                         className="text-green-600 hover:text-green-900 flex items-center text-xs"
-                                                        disabled={piglet.currentStage !== 'nursery'}
+                                                        // Disable if any of pigId, sex, breed is present (not empty/undefined/null)
+                                                        disabled={
+                                                            // piglet.currentStage !== 'nursery' ||
+                                                            isAnyBasicFieldPresent(piglet)
+                                                        }
                                                     >
                                                         <Edit className="h-3 w-3 mr-1" />
                                                         Edit Basic
@@ -336,7 +357,11 @@ const NurseryStage = () => {
                                                     <button
                                                         onClick={() => handleEditVaccination(piglet, item)}
                                                         className="text-green-600 hover:text-green-900 flex items-center text-xs"
-                                                        disabled={piglet.currentStage !== 'nursery'}
+                                                        // Disable if any of pigId, sex, breed is empty/undefined/null
+                                                        disabled={
+                                                            piglet.currentStage !== 'nursery' ||
+                                                            isAnyBasicFieldMissing(piglet)
+                                                        }
                                                     >
                                                         <Edit className="h-3 w-3 mr-1" />
                                                         Edit Vaccination

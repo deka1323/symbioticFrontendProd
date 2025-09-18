@@ -5,7 +5,7 @@ import {
     entryBreedingRecord,
     entryGestationRecord,
     entryFarrowingRecord,
-    entryNurseryRecord, // <-- added nursery handler
+    entryNurseryRecord,
 } from "../actions/dataEntryActions";
 
 const stageConfigs = {
@@ -48,7 +48,6 @@ const stageConfigs = {
         { name: "weaningDate", label: "Weaning Date", type: "date" },
         { name: "pigletCount", label: "Piglet Count", type: "number", required: true },
     ],
-
     fattening: [
         { name: "weight", label: "Current Weight", type: "number" },
         { name: "weighDate", label: "Weigh Date", type: "date" },
@@ -61,7 +60,7 @@ const pigletFields = [
     { name: "pigletId", label: "Piglet ID", type: "text", required: true },
     { name: "dob", label: "Date of Birth", type: "date", required: true },
     { name: "weight", label: "Weight", type: "number" },
-    { name: "sex", label: "Sex", type: "text", required: true },
+    { name: "sex", label: "Sex", type: "select", options: ["male", "female"], required: true },
     { name: "breed", label: "Breed", type: "text", required: true },
     { name: "csfDate", label: "CSF Vaccination Date", type: "date" },
     { name: "otherVaccinationDate", label: "Other Vaccination Date", type: "date" },
@@ -78,28 +77,19 @@ const DataEntry = ({ isOpen, onClose }) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    // Adjust piglets array whenever pigletCount changes
     useEffect(() => {
         if (stage === "nursery") {
             const count = Number(formData.pigletCount || 0);
             setPiglets((prev) => {
                 const updated = [...prev];
                 if (count > prev.length) {
-                    // Add missing piglets
                     for (let i = prev.length; i < count; i++) {
                         updated.push({
-                            pigletId: "",
-                            dob: "",
-                            weight: "",
-                            sex: "",
-                            breed: "",
-                            csfDate: "",
-                            otherVaccinationDate: "",
-                            otherVaccinationName: "",
+                            pigletId: "", dob: "", weight: "", sex: "", breed: "",
+                            csfDate: "", otherVaccinationDate: "", otherVaccinationName: "",
                         });
                     }
                 } else if (count < prev.length) {
-                    // Remove extra piglets
                     updated.length = count;
                 }
                 return updated;
@@ -115,7 +105,6 @@ const DataEntry = ({ isOpen, onClose }) => {
         });
     };
 
-    // Computed values for farrowing
     const computed = useMemo(() => {
         if (stage !== "farrowing") return {};
         const stillBorn = Number(formData.stillBorn || 0);
@@ -174,7 +163,6 @@ const DataEntry = ({ isOpen, onClose }) => {
             }
 
             if (stage === "nursery") {
-                // Parent-level validation
                 const requiredParentFields = ["boarId", "sowId", "sowBreed", "boarBreed", "pigletCount"];
                 for (const field of requiredParentFields) {
                     if (!formData[field]) {
@@ -183,7 +171,6 @@ const DataEntry = ({ isOpen, onClose }) => {
                     }
                 }
 
-                // Piglet validation
                 for (let i = 0; i < piglets.length; i++) {
                     const p = piglets[i];
                     const requiredPigletFields = ["pigletId", "breed", "sex", "dob"];
@@ -217,7 +204,6 @@ const DataEntry = ({ isOpen, onClose }) => {
                 };
             }
 
-            console.log("payload ||||||| >> ", payload)
             const data = await handler(payload);
             if (!data.success) {
                 toast.error("Error Submitting Data!");
@@ -238,7 +224,6 @@ const DataEntry = ({ isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl h-[90vh] flex flex-col relative">
-                {/* Header */}
                 <div className="flex justify-between items-center border-b px-6 py-4">
                     <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
                         Data Entry
@@ -251,10 +236,8 @@ const DataEntry = ({ isOpen, onClose }) => {
                     </button>
                 </div>
 
-                {/* Scrollable Form */}
                 <div className="flex-1 overflow-y-auto px-6 py-4">
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Stage Select */}
                         <div className="space-y-2">
                             <label className="text-gray-700 font-medium">Stage</label>
                             <select
@@ -275,7 +258,6 @@ const DataEntry = ({ isOpen, onClose }) => {
                             </select>
                         </div>
 
-                        {/* Dynamic Fields */}
                         {stage && (
                             <div className="space-y-4">
                                 {stageConfigs[stage]?.map((field) => (
@@ -296,7 +278,6 @@ const DataEntry = ({ isOpen, onClose }) => {
                                     </div>
                                 ))}
 
-                                {/* Computed Fields for Farrowing */}
                                 {stage === "farrowing" && (
                                     <>
                                         <div className="space-y-2">
@@ -324,15 +305,13 @@ const DataEntry = ({ isOpen, onClose }) => {
                                     </>
                                 )}
 
-                                {/* Piglet Details for Nursery */}
                                 {stage === "nursery" &&
                                     piglets.map((piglet, index) => (
                                         <div
                                             key={index}
                                             className={`rounded-xl shadow-md border p-5 space-y-4 transition 
-            ${index % 2 === 0 ? "bg-blue-50" : "bg-green-50"}`}
+                                            ${index % 2 === 0 ? "bg-blue-50" : "bg-green-50"}`}
                                         >
-                                            {/* Piglet Header */}
                                             <div className="flex items-center justify-between border-b pb-2">
                                                 <h3 className="text-lg font-semibold text-gray-800">
                                                     🐷 Piglet {index + 1}
@@ -342,36 +321,55 @@ const DataEntry = ({ isOpen, onClose }) => {
                                                 </span>
                                             </div>
 
-                                            {/* Piglet Fields */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {pigletFields.map((field) => (
                                                     <div key={field.name} className="space-y-1">
                                                         <label className="block text-gray-700 font-medium text-sm">
                                                             {field.label}
                                                         </label>
-                                                        <input
-                                                            type={field.type}
-                                                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                                            value={piglet[field.name] || ""}
-                                                            onChange={(e) =>
-                                                                handlePigletChange(
-                                                                    index,
-                                                                    field.name,
-                                                                    e.target.value
-                                                                )
-                                                            }
-                                                            required={field.required || false}
-                                                        />
+
+                                                        {/* ====== RENDER LOGIC START ====== */}
+                                                        {field.type === 'select' ? (
+                                                            <select
+                                                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                value={piglet[field.name] || ""}
+                                                                onChange={(e) =>
+                                                                    handlePigletChange(index, field.name, e.target.value)
+                                                                }
+                                                                required={field.required || false}
+                                                            >
+                                                                <option value="">-- Select {field.label} --</option>
+                                                                {field.options.map(option => (
+                                                                    <option key={option} value={option.toLowerCase()}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            <input
+                                                                type={field.type}
+                                                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                                value={piglet[field.name] || ""}
+                                                                onChange={(e) =>
+                                                                    handlePigletChange(
+                                                                        index,
+                                                                        field.name,
+                                                                        e.target.value
+                                                                    )
+                                                                }
+                                                                required={field.required || false}
+                                                            />
+                                                        )}
+                                                        {/* ====== RENDER LOGIC END ====== */}
+
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                     ))}
-
                             </div>
                         )}
 
-                        {/* Submit */}
                         <div className="pt-4">
                             <button
                                 type="submit"

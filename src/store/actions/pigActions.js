@@ -37,6 +37,14 @@ export const PIG_ACTION_TYPES = {
   MOVE_FATTENING_TO_DRIED_START: "MOVE_FATTENING_TO_DRIED_START",
   MOVE_FATTENING_TO_DRIED_SUCCESS: "MOVE_FATTENING_TO_DRIED_SUCCESS",
   MOVE_FATTENING_TO_DRIED_FAILURE: "MOVE_FATTENING_TO_DRIED_FAILURE",
+  MOVE_FATTENING_TO_INHOUSE_START: "MOVE_FATTENING_TO_INHOUSE_START",
+  MOVE_FATTENING_TO_INHOUSE_SUCCESS: "MOVE_FATTENING_TO_INHOUSE_SUCCESS",
+  MOVE_FATTENING_TO_INHOUSE_FAILURE: "MOVE_FATTENING_TO_INHOUSE_FAILURE",
+
+  // DRIED ACTIONS
+  FETCH_DRIED_RECORDS_START: "FETCH_DRIED_RECORDS_START",
+  FETCH_DRIED_RECORDS_SUCCESS: "FETCH_DRIED_RECORDS_SUCCESS",
+  FETCH_DRIED_RECORDS_FAILURE: "FETCH_DRIED_RECORDS_FAILURE",
 
   // // Stage Management Actions
   MOVE_TO_NEXT_STAGE_START: "MOVE_TO_NEXT_STAGE_START",
@@ -331,19 +339,49 @@ export const fetchFatteningRecordsFailure = (error) => ({
   payload: error,
 });
 
-export const moveFatteningToDriedStart = (fatteningId) => ({
+export const moveToDriedStart = (fatteningId) => ({
   type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_START,
   payload: { fatteningId },
 });
 
-export const moveFatteningToDriedSuccess = (fatteningId, driedRecord) => ({
+export const moveToDriedSuccess = (fatteningId, driedRecord) => ({
   type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_SUCCESS,
   payload: { fatteningId, driedRecord },
 });
 
-export const moveFatteningToDriedFailure = (error) => ({
+export const moveToDriedFailure = (error) => ({
   type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_DRIED_FAILURE,
   payload: { error },
+});
+
+export const moveToInHouseStart = (fatteningId) => ({
+  type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_INHOUSE_START,
+  payload: { fatteningId },
+});
+
+export const moveToInHouseSuccess = (fatteningId, inHouseRecord) => ({
+  type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_INHOUSE_SUCCESS,
+  payload: { fatteningId, inHouseRecord },
+});
+
+export const moveToInHouseFailure = (error) => ({
+  type: PIG_ACTION_TYPES.MOVE_FATTENING_TO_INHOUSE_FAILURE,
+  payload: { error },
+});
+
+// Dried
+export const fetchDriedRecordsStart = () => ({
+  type: PIG_ACTION_TYPES.FETCH_DRIED_RECORDS_START,
+});
+
+export const fetchDriedRecordsSuccess = (records) => ({
+  type: PIG_ACTION_TYPES.FETCH_DRIED_RECORDS_SUCCESS,
+  payload: records,
+});
+
+export const fetchDriedRecordsFailure = (error) => ({
+  type: PIG_ACTION_TYPES.FETCH_DRIED_RECORDS_FAILURE,
+  payload: error,
 });
 
 // Thunk Actions (Async Actions)
@@ -353,6 +391,7 @@ import * as farrowingAPI from "../../actions/farrowingActions";
 import * as nurseryAPI from "../../actions/nurseryActions";
 import * as farmAPI from "../../actions/dashboardActions";
 import * as fatteningAPI from "../../actions/fatteningActions";
+import * as driedAPI from "../../actions/driedActions";
 
 export const fetchBreedingRecords = () => {
   return async (dispatch) => {
@@ -461,7 +500,7 @@ export const moveToNextStage = (
 
 // import * as breedingAPI from '../../actions/breedingActions'; // make sure path is correct
 
-// Gestation Thunk Actions ------------------------------------------------------
+// Breeding Thunk Actions ------------------------------------------------------
 export const fetchCurrentBreedingRecords = (selectedFarm) => {
   return async (dispatch) => {
     dispatch(fetchBreedingRecordsStart());
@@ -751,7 +790,7 @@ export const updateFarrowingRecord = (record) => {
   };
 };
 
-// Fatening Thunk Actions  ------------------------------------------------------
+// Fattening Thunk Actions  ------------------------------------------------------
 export const fetchCurrentFatteningRecords = (selectedFarm) => {
   return async (dispatch) => {
     dispatch(fetchFatteningRecordsStart());
@@ -807,18 +846,53 @@ export const moveFatteningToDried = (record) => {
     dispatch(moveToDriedStart(fatteningId));
 
     try {
-      const result = await fatteningAPI.sendToFattening(record);
+      const result = await fatteningAPI.sendToDried(record);
+      console.log("FatteningToDried :", result);
 
       if (result.success) {
-        console.log("Moving to Dried", fatteningId, result.data.driedRecord);
+        console.log("Moving to dried", fatteningId, result.data.driedRecord);
         dispatch(moveToDriedSuccess(fatteningId, result.data.driedRecord));
-        return { success: true, targetStage: result.data.targetStage };
+        return {
+          success: true,
+          targetStage: result.data.targetStage,
+        };
       } else {
         dispatch(moveToDriedFailure(result.data));
         return { success: false, error: result.data };
       }
     } catch (error) {
       dispatch(moveToDriedFailure(error.message));
+      return { success: false, error: error.message };
+    }
+  };
+};
+
+export const moveFatteningToInHouse = (record) => {
+  return async (dispatch, getState) => {
+    const fatteningId = record.recordId;
+    dispatch(moveToInHouseStart(fatteningId));
+
+    try {
+      const result = await fatteningAPI.sendToInHouse(record);
+      console.log("FatteningToInHouse :", result);
+
+      if (result.success) {
+        console.log(
+          "Moving to in-House",
+          fatteningId,
+          result.data.inHouseRecord
+        );
+        dispatch(moveToInHouseSuccess(fatteningId, result.data.inHouseRecord));
+        return {
+          success: true,
+          targetStage: result.data.targetStage,
+        };
+      } else {
+        dispatch(moveToInHouseFailure(result.data));
+        return { success: false, error: result.data };
+      }
+    } catch (error) {
+      dispatch(moveToInHouseFailure(error.message));
       return { success: false, error: error.message };
     }
   };

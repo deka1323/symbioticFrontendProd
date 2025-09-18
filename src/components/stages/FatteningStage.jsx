@@ -8,7 +8,7 @@ import {
     selectIsMovingPig,
     selectMovingPigId,
 } from '../../store/selectors/pigSelectors';
-import { fetchCurrentFatteningRecords, fetchFatteningHistoryByMonth } from '../../store/actions/pigActions';
+import { fetchCurrentFatteningRecords, fetchFatteningHistoryByMonth, moveFatteningToDried, moveFatteningToInHouse } from '../../store/actions/pigActions';
 import AdvancedTable from '../common/AdvancedTable';
 
 const FatteningStage = () => {
@@ -33,6 +33,8 @@ const FatteningStage = () => {
     const currentRecords = useSelector(selectCurrentFatteningRecords);
     const historyRecords = useSelector(selectFatteningHistory);
 
+    console.log("currentRecords - ", currentRecords)
+
     const selectedFarm = "F1"; // fixed for now
 
     // Fetch data when filter or month/year changes
@@ -44,20 +46,58 @@ const FatteningStage = () => {
         }
     }, [dispatch, selectedFilter, selectedMonth, selectedYear, selectedFarm]);
 
-    const handleSellPig = async (action, item) => {
-        const loadingToast = toast.loading(`Processing sale for ${item.pigId}...`);
-        try {
-            // TODO: dispatch action here to update pig status
-            toast.success(`${item.pigId} successfully marked as sold!`, {
+    // const handleSellPig = async (action, item) => {
+    //     const loadingToast = toast.loading(`Processing sale for ${item.pigId}...`);
+    //     try {
+    //         // TODO: dispatch action here to update pig status
+    //         toast.success(`${item.pigId} successfully marked as sold!`, {
+    //             id: loadingToast,
+    //             duration: 3000,
+    //         });
+    //     } catch (error) {
+    //         toast.error('An error occurred while processing the sale', {
+    //             id: loadingToast,
+    //         });
+    //     }
+    // };
+
+    const handleMoveToDried = async (action, item) => {
+        const loadingToast = toast.loading(`Moving ${item.pigId} to Dried stage...`);
+        const result = await dispatch(moveFatteningToDried({ ...item, selectedFarm }));
+        console.log("result handle - ", result)
+
+        if (result.success) {
+            toast.success(`${item.pigId} successfully moved to ${result.targetStage} stage!`, {
                 id: loadingToast,
                 duration: 3000,
             });
-        } catch (error) {
-            toast.error('An error occurred while processing the sale', {
-                id: loadingToast,
-            });
+        } else {
+            toast.error('Failed to move pig to Dried stage', { id: loadingToast });
         }
     };
+
+    const handleMoveToInHouse = async (action, item) => {
+        const loadingToast = toast.loading(`Moving ${item.pigId} to InHouse)...`);
+        const result = await dispatch(moveFatteningToInHouse({ ...item, selectedFarm }));
+
+        if (result.success) {
+            toast.success(`${item.pigId} successfully moved to ${result.targetStage} !`, {
+                id: loadingToast,
+                duration: 3000,
+            });
+        } else {
+            toast.error('Failed to move pig to InHouse stage', { id: loadingToast });
+        }
+    };
+
+    const handleAction = (action, item) => {
+        if (action.key === 'dried') {
+            handleMoveToDried(action, item);
+        } else if (action.key === 'inhouse') {
+            handleMoveToInHouse(action, item);
+        }
+    };
+
 
     const applyWeightFilter = () => {
         const min = parseFloat(weightRange.min) || 0;
@@ -105,17 +145,17 @@ const FatteningStage = () => {
     // Columns definition
     const baseColumns = [
         { key: 'pigId', label: 'Pig ID', sortable: true },
-        {
-            key: 'fatherPigId',
-            label: 'Parents',
-            sortable: true,
-            render: (value, item) => (
-                <div>
-                    <div className="text-sm text-gray-900">Father: {value}</div>
-                    <div className="text-sm text-gray-500">Mother: {item.motherPigId}</div>
-                </div>
-            ),
-        },
+        // {
+        //     key: 'fatherPigId',
+        //     label: 'Parents',
+        //     sortable: true,
+        //     render: (value, item) => (
+        //         <div>
+        //             <div className="text-sm text-gray-900">Father: {value}</div>
+        //             <div className="text-sm text-gray-500">Mother: {item.motherPigId}</div>
+        //         </div>
+        //     ),
+        // },
         { key: 'breed', label: 'Breed', sortable: true },
         {
             key: 'sex',
@@ -124,8 +164,8 @@ const FatteningStage = () => {
             render: (value) => (
                 <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value === 'male'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-pink-100 text-pink-800'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-pink-100 text-pink-800'
                         }`}
                 >
                     {value}
@@ -150,8 +190,8 @@ const FatteningStage = () => {
             render: (value) => (
                 <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-green-100 text-green-800'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
                         }`}
                 >
                     {value ? 'Pregnancy Failed' : 'Normal'}
@@ -170,7 +210,7 @@ const FatteningStage = () => {
         },
         { key: 'inDate', label: 'In Date', sortable: true },
         { key: 'outDate', label: 'Out Date', sortable: true },
-        { key: 'outcome', label: 'Outcome', sortable: false },
+        // { key: 'outcome', label: 'Outcome', sortable: false },
         {
             key: 'pregnancyFailed',
             label: 'Status',
@@ -178,8 +218,8 @@ const FatteningStage = () => {
             render: (value) => (
                 <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${value
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-green-100 text-green-800'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-green-100 text-green-800'
                         }`}
                 >
                     {value ? 'Pregnancy Failed' : 'Normal'}
@@ -275,8 +315,8 @@ const FatteningStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                            ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -285,8 +325,8 @@ const FatteningStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('history')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                            ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-yellow-500 text-yellow-600 bg-yellow-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
@@ -303,7 +343,9 @@ const FatteningStage = () => {
                                     searchPlaceholder="Search by Pig ID..."
                                     searchKey="pigId"
                                     actionButtons={currentRecordsActions}
-                                    onAction={handleSellPig}
+                                    // onAction={handleSellPig}
+                                    onAction={handleAction}
+
                                 />
                             )}
 

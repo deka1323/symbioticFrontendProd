@@ -14,6 +14,7 @@ const initialState = {
   nurseryLitterRecords: [],
   currentNurseryRecords: [],
   nurseryHistory: [],
+  inHouseRecords: [],
   isLoading: false,
   isMovingPig: false,
   movingPigId: null,
@@ -521,7 +522,7 @@ const pigReducer = (state = initialState, action) => {
 
       return {
         ...state,
-        currentFatteningRecords: updatedFatteningRecords,
+        fatteningRecords: updatedFatteningRecords,
         driedRecords: [...state.driedRecords, driedRecord],
         isMovingPig: false,
         movingPigId: null,
@@ -535,6 +536,63 @@ const pigReducer = (state = initialState, action) => {
         isMovingPig: false,
         movingPigId: null,
         error: action.payload.error,
+      };
+    case PIG_ACTION_TYPES.MOVE_FATTENING_TO_INHOUSE_START:
+      return {
+        ...state,
+        isMovingPig: true,
+        movingPigId: action.payload.fatteningId,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.MOVE_FATTENING_TO_INHOUSE_SUCCESS: {
+      const { fatteningId, inHouseRecord } = action.payload;
+      const today = new Date().toISOString().split("T")[0];
+
+      const updatedFatteningRecords = state.fatteningRecords.map((record) =>
+        record.recordId === fatteningId
+          ? { ...record, outDate: today, status: "completed" }
+          : record
+      );
+
+      return {
+        ...state,
+        fatteningRecords: updatedFatteningRecords,
+        driedRecords: [...state.inHouseRecords, inHouseRecord],
+        isMovingPig: false,
+        movingPigId: null,
+        error: null,
+      };
+    }
+
+    case PIG_ACTION_TYPES.MOVE_FATTENING_TO_INHOUSE_FAILURE:
+      return {
+        ...state,
+        isMovingPig: false,
+        movingPigId: null,
+        error: action.payload.error,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_DRIED_RECORDS_START:
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_DRIED_RECORDS_SUCCESS:
+      return {
+        ...state,
+        driedRecords: action.payload,
+        isLoading: false,
+        error: null,
+      };
+
+    case PIG_ACTION_TYPES.FETCH_DRIED_RECORDS_FAILURE:
+      return {
+        ...state,
+        isLoading: false,
+        error: action.payload,
       };
 
     default:

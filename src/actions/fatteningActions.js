@@ -121,36 +121,32 @@ export const getFatteningHistoryByMonth = async (
 
 // Send fattening pig to dried stage
 export const sendToDried = async (record) => {
-  console.log("record ->", record);
   try {
     console.log("Sending to dried ->", record);
-    const fatteningId = record.recordId;
     const updateData = {
+      currentStage: "fattening",
+      currentStageId: record.recordId,
       pigId: record.pigId,
       selectedFarm: record.selectedFarm,
     };
-    console.log("updateData ->", updateData);
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
 
-    const response = await fetch(
-      `${API_BASE_URL}/fattening/sendToDried/${fatteningId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/fattening/sendToDried`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updateData),
+    });
 
     if (!response.ok) {
       const errorBody = await response.json();
-      console.log("Send to dried error -> ", errorBody);
+      console.log("Send to Dried error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to move to dried",
+        data: errorBody.message || "Failed to move to Dried",
       };
     }
 
@@ -164,41 +160,37 @@ export const sendToDried = async (record) => {
 
 // Send fattening pig to in-house stage
 export const sendToInHouse = async (record) => {
-  console.log("record ->", record);
   try {
-    console.log("Sending to in-house ->", record);
-    const fatteningId = record.recordId;
+    console.log("Sending to in-House ->", record);
     const updateData = {
+      currentStage: "fattening",
+      currentStageId: record.recordId,
       pigId: record.pigId,
       selectedFarm: record.selectedFarm,
     };
-    console.log("updateData ->", updateData);
     const session = await fetchAuthSession();
     const idToken = session.tokens?.idToken?.toString();
 
-    const response = await fetch(
-      `${API_BASE_URL}/fattening/sendToInHouse/${fatteningId}`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updateData),
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/fattening/sendToInHouse`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updateData),
+    });
 
     if (!response.ok) {
       const errorBody = await response.json();
-      console.log("Send to in-house error -> ", errorBody);
+      console.log("Send to InHouse error -> ", errorBody);
       return {
         success: false,
-        data: errorBody.message || "Failed to move to in-house",
+        data: errorBody.message || "Failed to move to inHouse",
       };
     }
 
     const data = await response.json();
-    console.log("Send to inhouse data -> ", data);
+    console.log("Send to inHouse data -> ", data);
     return { success: true, data: data.data };
   } catch (err) {
     return { success: false, data: err.message };
