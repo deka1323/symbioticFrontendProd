@@ -321,6 +321,11 @@ export const getAllPigsByStage = async (
       queryParams.lastEvaluatedKey = lastEvaluatedKey;
     }
 
+    console.log("stageName ->", stageName);
+    console.log(
+      "******* ",
+      `${API_BASE_URL}/current/${selectedFarm}/${currentStage}`
+    );
     const queryString = buildQueryString(queryParams);
     const response = await fetch(
       `${API_BASE_URL}/current/${selectedFarm}/${currentStage}?${queryString}`,

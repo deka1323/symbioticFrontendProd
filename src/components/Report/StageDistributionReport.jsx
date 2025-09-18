@@ -15,7 +15,7 @@ import { fetchCurrentFarm } from "../../store/actions/pigActions";
 
 // Dummy stages
 const STAGES = [
-  { key: "breeding", label: "Breeding" },
+  { key: "breeding", label: "Service" },
   { key: "gestation", label: "Gestation" },
   { key: "farrowing", label: "Farrowing" },
   { key: "nursery", label: "Nursery" },
@@ -110,7 +110,7 @@ const columns = [
   { key: "pigId", label: "Pig ID", sortable: true },
   { key: "sex", label: "Sex", sortable: true },
   { key: "breed", label: "Breed", sortable: true },
-  { key: "currentStage", label: "Stage", sortable: true },
+  { key: "stageName", label: "Stage", sortable: true },
 ];
 
 export default function StageDistributionReport() {
@@ -124,12 +124,12 @@ export default function StageDistributionReport() {
     let mounted = true;
     (async () => {
       const results = await Promise.all(
-        STAGES.map(({ key }) => getAllPigsByStage(selectedFarm, key.key))
+        STAGES.map(({ key }) => getAllPigsByStage(selectedFarm, key))
       );
 
       console.log("results ::::", results)
       const mapped = {};
-      STAGES.forEach(({ key }, i) => (mapped[key] = results[i] || []));
+      STAGES.forEach(({ key }, i) => (mapped[key] = results[i].data || []));
       if (mounted) setStageData(mapped);
     })();
     return () => {
@@ -153,7 +153,37 @@ export default function StageDistributionReport() {
   );
 
   const showTable = (rows, title) => {
-    setSelectedRows(Array.isArray(rows) ? rows : []);
+    let tableItems = Array.isArray(rows) ? rows : [];
+    // const updatedTableItems = tableItems.map((item) => {
+    //   () => {
+    //     return (
+    //       ((item.stageName === "gestation") || (item.stageName === "farrowing") || (item.stageName === "dried") || (item.stageName === "breeding")) ?
+    //         {
+    //           ...item,
+    //           sex: "female"
+    //         } : item
+    //     )
+    //   }
+    // })
+
+    const updatedTableItems = tableItems.map((item) => {
+      if (
+        item.stageName === "gestation" ||
+        item.stageName === "farrowing" ||
+        item.stageName === "dried" ||
+        item.stageName === "breeding"
+      ) {
+        return {
+          ...item,
+          sex: "female",
+        };
+      }
+      return item;
+    });
+
+    console.log("TABLE ITEMS ", tableItems),
+      console.log("updatedTableItems ", updatedTableItems)
+    setSelectedRows(updatedTableItems);
     setTableTitle(title);
     setIsModalOpen(true);
   };
@@ -212,7 +242,7 @@ export default function StageDistributionReport() {
                 </div>
 
                 {/* By Sex */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
+                {(key !== "gestation") && (key !== "farrowing") && (key !== "dried") && (key !== "breeding") && <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-2 text-gray-600 mb-2">
                     <LayoutList className="h-4 w-4 text-emerald-600" />
                     <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
@@ -245,7 +275,7 @@ export default function StageDistributionReport() {
                       ♀ Female · {femaleCount}
                     </Pill>
                   </div>
-                </div>
+                </div>}
 
                 {/* By Breed */}
                 <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow col-span-full">
@@ -280,7 +310,7 @@ export default function StageDistributionReport() {
                 </div>
 
                 {/* Sex × Breed */}
-                <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow col-span-full">
+                {(key !== "gestation") && (key !== "farrowing") && (key !== "dried") && (key !== "breeding") && <div className="rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow col-span-full">
                   <div className="flex items-center gap-2 text-gray-600 mb-3">
                     <LayoutList className="h-4 w-4 text-violet-600" />
                     <span className="text-xs font-semibold uppercase tracking-wide text-violet-700">
@@ -359,7 +389,7 @@ export default function StageDistributionReport() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div>}
               </div>
             </StageCard>
           );

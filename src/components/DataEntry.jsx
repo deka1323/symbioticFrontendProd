@@ -217,7 +217,7 @@ const DataEntry = ({ isOpen, onClose }) => {
                 };
             }
 
-
+            console.log("payload ||||||| >> ", payload)
             const data = await handler(payload);
             if (!data.success) {
                 toast.error("Error Submitting Data!");
