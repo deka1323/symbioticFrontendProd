@@ -331,13 +331,16 @@ export const sampleNurseryRecords = [
 
 // Company Information
 export const companyInfo = {
-  name: "Premium Pig Farm Ltd.",
-  address: "123 Farm Road, Agricultural District, State 12345",
-  phone: "+1 (555) 123-4567",
-  email: "info@premiumpigfarm.com",
+  name: "SYMBIOTIC FOODS PVT. LTD.",
+  address: "Village - Dhekidol, P.O- Ghoramari, Tezpur, Sonitpur, Assam",
+  phone: "9560998889",
+  email: "symbioticfoods@gmail.com",
+  website: "symbioticfoods.in",
   registrationNumber: "REG-PPF-2020-001",
   ownerName: "John Smith",
   ownerSignature: "John Smith",
+  DoctorName: "Dr. Deepak Pathak Chetry",
+  doctorRegistrationNumber: "ASM 2355",
 };
 
 // Generate unique receipt number
@@ -347,5 +350,5 @@ export const generateReceiptNumber = () => {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   const time = String(date.getTime()).slice(-6);
-  return `PPF-${year}${month}${day}-${time}`;
+  return `SF-${year}${month}${day}-${time}`;
 };

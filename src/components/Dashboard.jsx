@@ -19,6 +19,7 @@ import PopulationReport from "./Report/PopulationReport";
 import PigProfile from "./PigProfile";
 import ChangePigId from "./ChangePigId";
 import farmLogo from "../assets/symbioticLogo.png";
+import BoarModal from "./BoarModal";
 
 
 const Dashboard = () => {
@@ -37,6 +38,7 @@ const Dashboard = () => {
   const [isDataEntryOpen, setIsDataEntryOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [showChangePigIdModal, setShowChangePigIdModal] = useState(false);
+  const [showBoarModal, setShowBoarModal] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCurrentFarm());
@@ -192,6 +194,12 @@ const Dashboard = () => {
           >
             Change Pig ID
           </button>
+          <button
+            onClick={() => setShowBoarModal(true)}
+            className="px-4 py-2 text-sm font-semibold border border-yellow-500 text-yellow-600 bg-white rounded-md hover:bg-yellow-50"
+          >
+            Boar Details
+          </button>
         </motion.div>
 
         {/* ===================== Pig Stages Section ===================== */}
@@ -236,37 +244,37 @@ const Dashboard = () => {
 
         {/* Quick Reports */}
         <motion.section
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ duration: 0.5 }}
-  className="border border-gray-200 rounded-md p-4 bg-blue-50"
->
-  {/* Header */}
-  <h2 className="text-md md:text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
-    <BarChart2 className="h-5 w-5 text-blue-800" />
-    Quick Reports
-  </h2>
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="border border-gray-200 rounded-md p-4 bg-blue-50"
+        >
+          {/* Header */}
+          <h2 className="text-md md:text-lg font-semibold text-blue-800 mb-4 flex items-center gap-2">
+            <BarChart2 className="h-5 w-5 text-blue-800" />
+            Quick Reports
+          </h2>
 
-  {/* Report Cards */}
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-    {[
-      { title: "Vaccination Details", icon: Syringe },
-      { title: "Expected Deliveries", icon: CalendarDays },
-      { title: "Stage Distribution", icon: PieChart },
-      { title: "More Reports", icon: FileText },
-    ].map((card, idx) => (
-      <motion.div
-        key={idx}
-        whileHover={{ scale: 1.02 }}
-        className="border border-gray-200 rounded-md p-4 text-center cursor-pointer hover:shadow-sm bg-white transition"
-        onClick={() => navigate("/reports")}
-      >
-        <card.icon className="h-6 w-6 text-emerald-600 mb-2 mx-auto" />
-        <h3 className="text-sm font-medium text-gray-700">{card.title}</h3>
-      </motion.div>
-    ))}
-  </div>
-</motion.section>
+          {/* Report Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { title: "Vaccination Details", icon: Syringe },
+              { title: "Expected Deliveries", icon: CalendarDays },
+              { title: "Stage Distribution", icon: PieChart },
+              { title: "More Reports", icon: FileText },
+            ].map((card, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{ scale: 1.02 }}
+                className="border border-gray-200 rounded-md p-4 text-center cursor-pointer hover:shadow-sm bg-white transition"
+                onClick={() => navigate("/reports")}
+              >
+                <card.icon className="h-6 w-6 text-emerald-600 mb-2 mx-auto" />
+                <h3 className="text-sm font-medium text-gray-700">{card.title}</h3>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
 
         {/* Population Report */}
         <motion.section
@@ -292,6 +300,12 @@ const Dashboard = () => {
           <ChangePigId
             selectedFarm={selectedFarm}
             onClose={() => setShowChangePigIdModal(false)}
+          />
+        )}
+        {showBoarModal && (
+          <BoarModal
+            selectedFarm={selectedFarm}
+            onClose={() => setShowBoarModal(false)}
           />
         )}
       </div>

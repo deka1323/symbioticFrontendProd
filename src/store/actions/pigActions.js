@@ -241,9 +241,9 @@ export const moveToNurseryStart = (farrowingId) => ({
   payload: { farrowingId },
 });
 
-export const moveToNurserySuccess = (farrowingId, nurseryRecord) => ({
+export const moveToNurserySuccess = (farrowingId, litterRecord) => ({
   type: PIG_ACTION_TYPES.MOVE_TO_NURSERY_SUCCESS,
-  payload: { farrowingId, nurseryRecord },
+  payload: { farrowingId, litterRecord },
 });
 
 export const moveToNurseryFailure = (error) => ({

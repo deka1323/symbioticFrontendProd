@@ -314,7 +314,7 @@ const pigReducer = (state = initialState, action) => {
       };
 
     case PIG_ACTION_TYPES.MOVE_TO_NURSERY_SUCCESS: {
-      const { farrowingId, nurseryRecord } = action.payload;
+      const { farrowingId, litterRecord } = action.payload;
       const today = new Date().toISOString().split("T")[0];
 
       // Update farrowing record with out date and status
@@ -327,7 +327,7 @@ const pigReducer = (state = initialState, action) => {
       return {
         ...state,
         farrowingRecords: updatedFarrowingRecords,
-        nurseryRecords: [...state.nurseryRecords, nurseryRecord],
+        nurseryLitterRecords: [...state.nurseryLitterRecords, litterRecord],
         isMovingPig: false,
         movingPigId: null,
         error: null,

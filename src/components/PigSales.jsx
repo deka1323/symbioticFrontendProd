@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
-import { ShoppingCart, Plus, X, Download, Eye, User, MapPin, Phone, FileText, AlertTriangle } from 'lucide-react';
+import {
+    ShoppingCart,
+    Plus,
+    X,
+    Download,
+    Eye,
+    User,
+    FileText,
+    AlertTriangle
+} from 'lucide-react';
 import { toast, Toaster } from 'react-hot-toast';
-import { useSelector, useDispatch } from 'react-redux';
 import { samplePigs, companyInfo, generateReceiptNumber } from '../data/sampleData';
 import jsPDF from 'jspdf';
 
 const PigSales = () => {
-    const [pigletIds, setPigletIds] = useState(['']);
-    const [adultIds, setAdultIds] = useState(['']);
+    const [saleType, setSaleType] = useState('gilt'); // gilt or fattening
+    const [pigIds, setPigIds] = useState(['']);
     const [buyerInfo, setBuyerInfo] = useState({
         name: '',
         address: '',
@@ -17,43 +25,27 @@ const PigSales = () => {
     const [showPreview, setShowPreview] = useState(false);
     const [receiptData, setReceiptData] = useState(null);
 
-    console.log("samplePigs ->", samplePigs)
+    const addPigIdField = () => {
+        setPigIds([...pigIds, '']);
+    };
 
-    const addPigIdField = (type) => {
-        if (type === 'piglet') {
-            setPigletIds([...pigletIds, '']);
-        } else {
-            setAdultIds([...adultIds, '']);
+    const removePigIdField = (index) => {
+        if (pigIds.length > 1) {
+            const newIds = pigIds.filter((_, i) => i !== index);
+            setPigIds(newIds);
         }
     };
 
-    const removePigIdField = (type, index) => {
-        if (type === 'piglet' && pigletIds.length > 1) {
-            const newIds = pigletIds.filter((_, i) => i !== index);
-            setPigletIds(newIds);
-        } else if (type === 'adult' && adultIds.length > 1) {
-            const newIds = adultIds.filter((_, i) => i !== index);
-            setAdultIds(newIds);
-        }
-    };
-
-    const updatePigId = (type, index, value) => {
-        if (type === 'piglet') {
-            const newIds = [...pigletIds];
-            newIds[index] = value;
-            setPigletIds(newIds);
-        } else {
-            const newIds = [...adultIds];
-            newIds[index] = value;
-            setAdultIds(newIds);
-        }
+    const updatePigId = (index, value) => {
+        const newIds = [...pigIds];
+        newIds[index] = value;
+        setPigIds(newIds);
     };
 
     const validateForm = () => {
-        const validPigletIds = pigletIds.filter(id => id.trim() !== '');
-        const validAdultIds = adultIds.filter(id => id.trim() !== '');
+        const validPigIds = pigIds.filter(id => id.trim() !== '');
 
-        if (validPigletIds.length === 0 && validAdultIds.length === 0) {
+        if (validPigIds.length === 0) {
             toast.error('Please enter at least one Pig ID');
             return false;
         }
@@ -88,18 +80,13 @@ const PigSales = () => {
     const handleSubmit = () => {
         if (!validateForm()) return;
 
-        const validPigletIds = pigletIds.filter(id => id.trim() !== '');
-        const validAdultIds = adultIds.filter(id => id.trim() !== '');
-        const allPigIds = [...validPigletIds, ...validAdultIds];
-
+        const validPigIds = pigIds.filter(id => id.trim() !== '');
         const pigDetails = [];
         const notFoundPigs = [];
 
-        allPigIds.forEach(pigId => {
+        validPigIds.forEach(pigId => {
             const pig = findPigDetails(pigId);
             if (pig) {
-                // Determine sale type based on stage
-                const saleType = ['nursery', 'fattening'].includes(pig.currentStage) ? 'piglet' : 'adult';
                 pigDetails.push({ ...pig, saleType });
             } else {
                 notFoundPigs.push(pigId);
@@ -116,7 +103,6 @@ const PigSales = () => {
             return;
         }
 
-        // Generate receipt data
         const receipt = {
             receiptNumber: generateReceiptNumber(),
             date: new Date().toLocaleDateString(),
@@ -124,8 +110,8 @@ const PigSales = () => {
             manager: managerName,
             pigs: pigDetails,
             company: companyInfo,
-            pigletCount: pigDetails.filter(p => p.saleType === 'piglet').length,
-            adultCount: pigDetails.filter(p => p.saleType === 'adult').length
+            giltCount: saleType === 'gilt' ? pigDetails.length : 0,
+            fatteningCount: saleType === 'fattening' ? pigDetails.length : 0
         };
 
         setReceiptData(receipt);
@@ -141,7 +127,6 @@ const PigSales = () => {
             const pageWidth = doc.internal.pageSize.width;
             let yPosition = 20;
 
-            // Header
             doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
             doc.text(receiptData.company.name, pageWidth / 2, yPosition, { align: 'center' });
@@ -157,13 +142,11 @@ const PigSales = () => {
             yPosition += 6;
             doc.text(`Registration No: ${receiptData.company.registrationNumber}`, pageWidth / 2, yPosition, { align: 'center' });
 
-            // Title
             yPosition += 20;
             doc.setFontSize(16);
             doc.setFont(undefined, 'bold');
             doc.text('LIVESTOCK SALE RECEIPT', pageWidth / 2, yPosition, { align: 'center' });
 
-            // Receipt details
             yPosition += 20;
             doc.setFontSize(12);
             doc.setFont(undefined, 'normal');
@@ -171,9 +154,8 @@ const PigSales = () => {
             doc.text(`Date: ${receiptData.date}`, pageWidth - 60, yPosition);
 
             yPosition += 10;
-            doc.text(`Piglets: ${receiptData.pigletCount} | Adults: ${receiptData.adultCount}`, 20, yPosition);
+            doc.text(`Gilt: ${receiptData.giltCount} | Fattening: ${receiptData.fatteningCount}`, 20, yPosition);
 
-            // Buyer information
             yPosition += 20;
             doc.setFont(undefined, 'bold');
             doc.text('BUYER INFORMATION:', 20, yPosition);
@@ -188,7 +170,6 @@ const PigSales = () => {
             yPosition += 6;
             doc.text(`Phone: ${receiptData.buyer.phone}`, 20, yPosition);
 
-            // Pig details
             yPosition += 20;
             doc.setFont(undefined, 'bold');
             doc.text('LIVESTOCK DETAILS:', 20, yPosition);
@@ -204,7 +185,6 @@ const PigSales = () => {
                 yPosition += 10;
             });
 
-            // Footer
             yPosition += 20;
             doc.text(`Manager: ${receiptData.manager}`, 20, yPosition);
             doc.text(`Owner: ${receiptData.company.ownerName}`, pageWidth - 80, yPosition);
@@ -226,8 +206,6 @@ const PigSales = () => {
     };
 
     const confirmSale = () => {
-        // Here you would update the database to mark pigs as sold
-        // Also save receipt details to database
         const receiptRecord = {
             receiptNumber: receiptData.receiptNumber,
             date: receiptData.date,
@@ -235,18 +213,15 @@ const PigSales = () => {
             manager: receiptData.manager,
             pigIds: receiptData.pigs.map(p => p.pigId),
             totalPigs: receiptData.pigs.length,
-            pigletCount: receiptData.pigletCount,
-            adultCount: receiptData.adultCount
+            giltCount: receiptData.giltCount,
+            fatteningCount: receiptData.fatteningCount
         };
 
-        // Save to database (mock)
         console.log('Saving receipt to database:', receiptRecord);
 
         toast.success(`${receiptData.pigs.length} pig(s) marked as sold in database`);
 
-        // Reset form
-        setPigletIds(['']);
-        setAdultIds(['']);
+        setPigIds(['']);
         setBuyerInfo({ name: '', address: '', phone: '' });
         setManagerName('');
         setShowPreview(false);
@@ -272,56 +247,34 @@ const PigSales = () => {
                     <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
                         <h2 className="text-xl font-semibold text-gray-900 mb-6">Create New Sale</h2>
 
-                        {/* Piglet IDs */}
+                        {/* Sale Type */}
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Piglet IDs to Sell
-                            </label>
-                            {pigletIds.map((pigId, index) => (
-                                <div key={`piglet-${index}`} className="flex items-center space-x-2 mb-2">
-                                    <input
-                                        type="text"
-                                        value={pigId}
-                                        onChange={(e) => updatePigId('piglet', index, e.target.value)}
-                                        placeholder="Enter Piglet ID (e.g., PIG101)"
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                    />
-                                    {pigletIds.length > 1 && (
-                                        <button
-                                            onClick={() => removePigIdField('piglet', index)}
-                                            className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                            <button
-                                onClick={() => addPigIdField('piglet')}
-                                className="flex items-center space-x-2 text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-2 rounded-lg transition-colors duration-200"
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Sale Type</label>
+                            <select
+                                value={saleType}
+                                onChange={(e) => setSaleType(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                             >
-                                <Plus className="h-4 w-4" />
-                                <span>Add Another Piglet ID</span>
-                            </button>
+                                <option value="gilt">Gilt</option>
+                                <option value="fattening">Fattening</option>
+                            </select>
                         </div>
 
-                        {/* Adult Pig IDs */}
+                        {/* Pig IDs */}
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Adult Pig IDs to Sell
-                            </label>
-                            {adultIds.map((pigId, index) => (
-                                <div key={`adult-${index}`} className="flex items-center space-x-2 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Pig IDs to Sell</label>
+                            {pigIds.map((pigId, index) => (
+                                <div key={`pig-${index}`} className="flex items-center space-x-2 mb-2">
                                     <input
                                         type="text"
                                         value={pigId}
-                                        onChange={(e) => updatePigId('adult', index, e.target.value)}
-                                        placeholder="Enter Adult Pig ID (e.g., PIG001)"
+                                        onChange={(e) => updatePigId(index, e.target.value)}
+                                        placeholder={`Enter ${saleType} Pig ID (e.g., PIG101)`}
                                         className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                     />
-                                    {adultIds.length > 1 && (
+                                    {pigIds.length > 1 && (
                                         <button
-                                            onClick={() => removePigIdField('adult', index)}
+                                            onClick={() => removePigIdField(index)}
                                             className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
                                         >
                                             <X className="h-4 w-4" />
@@ -330,11 +283,11 @@ const PigSales = () => {
                                 </div>
                             ))}
                             <button
-                                onClick={() => addPigIdField('adult')}
+                                onClick={addPigIdField}
                                 className="flex items-center space-x-2 text-green-600 hover:text-green-800 hover:bg-green-50 px-3 py-2 rounded-lg transition-colors duration-200"
                             >
                                 <Plus className="h-4 w-4" />
-                                <span>Add Another Adult Pig ID</span>
+                                <span>Add Another Pig ID</span>
                             </button>
                         </div>
 
@@ -346,9 +299,7 @@ const PigSales = () => {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Buyer Name *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Buyer Name *</label>
                                     <input
                                         type="text"
                                         value={buyerInfo.name}
@@ -358,9 +309,7 @@ const PigSales = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Phone Number *
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
                                     <input
                                         type="tel"
                                         value={buyerInfo.phone}
@@ -371,9 +320,7 @@ const PigSales = () => {
                                 </div>
                             </div>
                             <div className="mt-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Address *
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
                                 <textarea
                                     value={buyerInfo.address}
                                     onChange={(e) => setBuyerInfo({ ...buyerInfo, address: e.target.value })}
@@ -386,9 +333,7 @@ const PigSales = () => {
 
                         {/* Manager Name */}
                         <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Manager Name *
-                            </label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Manager Name *</label>
                             <input
                                 type="text"
                                 value={managerName}
@@ -435,11 +380,12 @@ const PigSales = () => {
 
                         {/* Receipt Content */}
                         <div className="p-8" id="receipt-content">
-                            {/* Header */}
                             <div className="text-center mb-8">
                                 <h1 className="text-2xl font-bold text-gray-900">{receiptData?.company.name}</h1>
                                 <p className="text-gray-600 mt-1">{receiptData?.company.address}</p>
-                                <p className="text-gray-600">Phone: {receiptData?.company.phone} | Email: {receiptData?.company.email}</p>
+                                <p className="text-gray-600">
+                                    Phone: {receiptData?.company.phone} | Email: {receiptData?.company.email}
+                                </p>
                                 <p className="text-gray-600">Registration No: {receiptData?.company.registrationNumber}</p>
                             </div>
 
@@ -452,12 +398,20 @@ const PigSales = () => {
                             {/* Receipt Details */}
                             <div className="grid grid-cols-2 gap-4 mb-6">
                                 <div>
-                                    <p><strong>Receipt No:</strong> {receiptData?.receiptNumber}</p>
-                                    <p><strong>Piglets:</strong> {receiptData?.pigletCount}</p>
+                                    <p>
+                                        <strong>Receipt No:</strong> {receiptData?.receiptNumber}
+                                    </p>
+                                    <p>
+                                        <strong>Gilt:</strong> {receiptData?.giltCount}
+                                    </p>
                                 </div>
                                 <div className="text-right">
-                                    <p><strong>Date:</strong> {receiptData?.date}</p>
-                                    <p><strong>Adults:</strong> {receiptData?.adultCount}</p>
+                                    <p>
+                                        <strong>Date:</strong> {receiptData?.date}
+                                    </p>
+                                    <p>
+                                        <strong>Fattening:</strong> {receiptData?.fatteningCount}
+                                    </p>
                                 </div>
                             </div>
 
@@ -467,9 +421,15 @@ const PigSales = () => {
                                     <User className="h-4 w-4 mr-2" />
                                     BUYER INFORMATION
                                 </h3>
-                                <p><strong>Name:</strong> {receiptData?.buyer.name}</p>
-                                <p><strong>Address:</strong> {receiptData?.buyer.address}</p>
-                                <p><strong>Phone:</strong> {receiptData?.buyer.phone}</p>
+                                <p>
+                                    <strong>Name:</strong> {receiptData?.buyer.name}
+                                </p>
+                                <p>
+                                    <strong>Address:</strong> {receiptData?.buyer.address}
+                                </p>
+                                <p>
+                                    <strong>Phone:</strong> {receiptData?.buyer.phone}
+                                </p>
                             </div>
 
                             {/* Pig Details */}
@@ -508,13 +468,17 @@ const PigSales = () => {
                             {/* Signatures */}
                             <div className="grid grid-cols-2 gap-8 mt-12">
                                 <div>
-                                    <p className="mb-8"><strong>Manager:</strong> {receiptData?.manager}</p>
+                                    <p className="mb-8">
+                                        <strong>Manager:</strong> {receiptData?.manager}
+                                    </p>
                                     <div className="border-t border-gray-400 pt-2">
                                         <p className="text-center text-sm text-gray-600">Manager Signature</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <p className="mb-8"><strong>Owner:</strong> {receiptData?.company.ownerName}</p>
+                                    <p className="mb-8">
+                                        <strong>Owner:</strong> {receiptData?.company.ownerName}
+                                    </p>
                                     <div className="border-t border-gray-400 pt-2">
                                         <p className="text-center text-sm text-gray-600">Owner Signature</p>
                                     </div>

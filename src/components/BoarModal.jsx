@@ -13,8 +13,13 @@ const BoarModal = ({ selectedFarm, onClose }) => {
     useEffect(() => {
         const fetchTable = async () => {
             try {
-                const res = await getAllActiveLivingMales();
+                const res = await getAllActiveLivingMales(selectedFarm);
                 let data = Array.isArray(res.data) ? res.data : [];
+
+                const males = data.filter((pig) => pig.sex === "male")
+                const females = data.filter((pig) => pig.sex === "female")
+                console.log("males - ", males)
+                console.log("females - ", females)
 
                 // filter only male boars
                 data = data.filter(
