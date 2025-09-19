@@ -5,6 +5,7 @@ import store from './store';
 import App from './App.jsx';
 import './index.css';
 import './config/aws-config';
+import bg from './assets/bg-img.png';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -13,3 +14,8 @@ createRoot(document.getElementById('root')).render(
     </Provider>
   </StrictMode>
 );
+
+document.body.style.backgroundImage = `url(${bg})`;
+document.body.style.backgroundRepeat = 'no-repeat';
+document.body.style.backgroundSize = 'cover';
+document.body.style.backgroundPosition = 'center';

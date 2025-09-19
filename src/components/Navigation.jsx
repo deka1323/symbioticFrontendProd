@@ -46,13 +46,21 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo Section */}
-          <div className="flex items-center">
+          <div
+            className="flex items-center cursor-pointer"
+            onClick={() => navigate("/")}
+          >
             <div className="flex-shrink-0 flex items-center">
               <img src={logo} alt="Symbiotic Logo" className="h-8 w-8 object-contain" />
-              <span className="ml-2 text-base sm:text-lg font-bold text-gray-900 hidden xs:block">Symbiotic</span>
-              <span className="ml-2 text-sm font-bold text-gray-900 xs:hidden">Symbiotic</span>
+              <span className="ml-2 text-base sm:text-lg font-bold text-gray-900 hidden xs:block">
+                Symbiotic Foods
+              </span>
+              <span className="ml-2 text-sm font-bold text-gray-900 xs:hidden">
+                Symbiotic Foods
+              </span>
             </div>
           </div>
+
 
           {/* Desktop Navigation */}
           <div className="hidden xl:flex items-center space-x-1">
@@ -65,8 +73,8 @@ const Navigation = () => {
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
                     className={`inline-flex items-center px-2 py-2 text-xs font-medium rounded-lg transition-all duration-200 whitespace-nowrap ${isActive
-                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                      ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                      : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
                     <Icon className="h-3 w-3 mr-1" />
@@ -143,8 +151,8 @@ const Navigation = () => {
                     key={item.id}
                     onClick={() => handleNavigation(item.id)}
                     className={`flex items-center w-full px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${isActive
-                        ? 'bg-emerald-100 text-emerald-700 shadow-sm'
-                        : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
+                      ? 'bg-emerald-100 text-emerald-700 shadow-sm'
+                      : 'text-gray-600 hover:text-emerald-600 hover:bg-emerald-50'
                       }`}
                   >
                     <Icon className="h-5 w-5 mr-3" />
