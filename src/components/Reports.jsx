@@ -9,6 +9,7 @@ import { currentFarmRecord } from '../store/selectors/pigSelectors';
 import { fetchCurrentFarm } from '../store/actions/pigActions';
 import { useDispatch, useSelector } from "react-redux";
 import ExpectedDeliveryReport from './Report/ExpectedDelieveryReport';
+import InHouseReport from './Report/InHouseReport';
 
 const Reports = () => {
   const dispatch = useDispatch();
@@ -30,7 +31,7 @@ const Reports = () => {
   const reportTypes = [
     { id: 'vaccination', name: 'Upcoming Vaccinations', icon: Syringe, color: 'green' },
     { id: 'delivery', name: 'Expected Deliveries', icon: Baby, color: 'pink' },
-    // { id: 'population', name: 'Pig Population Report', icon: BarChart3, color: 'blue' },
+    { id: 'inHouse', name: 'In-House Report', icon: BarChart3, color: 'blue' },
     { id: 'stages', name: 'Stage Distribution', icon: TrendingUp, color: 'purple' },
     { id: 'sold', name: 'Sales Report', icon: FileText, color: 'orange' },
   ];
@@ -349,7 +350,7 @@ const Reports = () => {
           </h1>
 
           {/* Month/Year Selection */}
-          {(selectedReport === 'vaccination' || selectedReport === 'delivery' || selectedReport === 'sold') && (
+          {(selectedReport === 'vaccination' || selectedReport === 'delivery' || selectedReport === 'sold' || selectedReport === 'inHouse') && (
             <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
@@ -411,6 +412,7 @@ const Reports = () => {
             {/* {selectedReport === 'population' && renderPopulationReport()} */}
             {/* {selectedReport === 'stages' && renderStageReport()} */}
             {selectedReport === 'stages' && <StageDistributionReport />}
+            {selectedReport === 'inHouse' && <InHouseReport selectedFarm={selectedFarm} selectedMonth={selectedMonth} selectedYear={selectedYear} />}
             {selectedReport === 'sold' && renderSalesReport()}
           </div>
         </div>

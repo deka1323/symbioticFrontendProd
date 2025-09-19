@@ -274,8 +274,9 @@ const NurseryStage = () => {
             )
         },
         { key: 'breed', label: 'Breed', sortable: true },
+        { key: 'weight', label: 'Weight', sortable: true },
         { key: 'inDate', label: 'In Date', sortable: true },
-        { key: 'outDate', label: 'Out Date', sortable: true },
+
     ];
 
     // Action buttons for current records

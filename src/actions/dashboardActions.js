@@ -360,3 +360,52 @@ export const getAllPigsByStage = async (
     return { success: false, data: err.message };
   }
 };
+
+export const getAllActiveLivingMales = async (
+  selectedFarm,
+  lastEvaluatedKey = null,
+  limit = 50
+) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const queryParams = { limit };
+    if (lastEvaluatedKey) {
+      queryParams.lastEvaluatedKey = lastEvaluatedKey;
+    }
+
+    const queryString = buildQueryString(queryParams);
+    const response = await fetch(
+      `${API_BASE_URL}/allActiveLivingMales/${selectedFarm}?${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.log("Active male error -> ", errorBody);
+      return {
+        success: false,
+        data:
+          errorBody.message || "Failed to fetch current living male records",
+      };
+    }
+
+    const data = await response.json();
+    console.log("Active living male data -> ", data);
+    return {
+      success: true,
+      data: data.data,
+      lastEvaluatedKey: data.lastEvaluatedKey,
+      hasMore: data.hasMore,
+    };
+  } catch (err) {
+    return { success: false, data: err.message };
+  }
+};
