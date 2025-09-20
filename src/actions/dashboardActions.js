@@ -409,3 +409,88 @@ export const getAllActiveLivingMales = async (
     return { success: false, data: err.message };
   }
 };
+
+export const getFeedingDataByMonth = async (
+  selectedFarm,
+  selectedMonth,
+  selectedYear,
+  lastEvaluatedKey = null,
+  limit = 50
+) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const queryParams = { limit };
+    if (lastEvaluatedKey) {
+      queryParams.lastEvaluatedKey = lastEvaluatedKey;
+    }
+
+    const queryString = buildQueryString(queryParams);
+    const response = await fetch(
+      `${API_BASE_URL}/feedingData/${selectedFarm}/${selectedYear}/${selectedMonth}?${queryString}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorBody = await response.json();
+      console.log("Feeding data error -> ", errorBody);
+      return {
+        success: false,
+        data: errorBody.message || "Failed to fetch feeding data",
+      };
+    }
+
+    const data = await response.json();
+    console.log("Feeding  data -> ", data);
+    return {
+      success: true,
+      data: data.data,
+      lastEvaluatedKey: data.lastEvaluatedKey,
+      hasMore: data.hasMore,
+      month: data.month,
+    };
+  } catch (err) {
+    return { success: false, data: err.message };
+  }
+};
+
+export const updateFeedingData = async (payload) => {
+  try {
+    const session = await fetchAuthSession();
+    const idToken = session.tokens?.idToken?.toString();
+
+    const response = await fetch(`${API_BASE_URL}/updateFeed`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    // parse JSON once
+    const responseData = await response.json();
+    console.log("Raw response data ->", responseData);
+
+    if (!response.ok) {
+      console.log("update feed record error -> ", responseData);
+      return {
+        success: false,
+        data: responseData.message || "Failed to update feed record",
+      };
+    }
+
+    console.log("update feed record data -> ", responseData);
+    return { success: true, data: responseData.data };
+  } catch (err) {
+    console.log("error ->", err);
+    return { success: false, data: err.message };
+  }
+};
