@@ -6,6 +6,12 @@ import { fetchCurrentFarm, fetchCurrentNurseryLitterRecords, fetchCurrentNursery
 import { selectIsMovingPig, selectMovingPigId, selectCurrentNurseryLitterRecords, selectCurrentNurseryRecords, currentFarmRecord } from '../../store/selectors/pigSelectors';
 import AdvancedTable from '../common/AdvancedTable';
 
+const Loader = () => (
+    <div className="flex justify-center items-center py-10">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-600"></div>
+    </div>
+);
+
 const NurseryStage = () => {
     const dispatch = useDispatch();
     const [selectedFilter, setSelectedFilter] = useState('current');
@@ -38,6 +44,7 @@ const NurseryStage = () => {
 
     const [breedSummary, setBreedSummary] = useState({});
     const [isBreedEditable, setIsBreedEditable] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
 
     const months = [
@@ -61,12 +68,21 @@ const NurseryStage = () => {
 
 
     useEffect(() => {
-        if (selectedFilter === 'current') {
-            dispatch(fetchCurrentNurseryLitterRecords(selectedFarm));
-        } else {
-            dispatch(fetchCurrentNurseryRecords(selectedFarm));
-        }
-    }, [dispatch, selectedFilter, selectedMonth, selectedYear]);
+        const fetchData = async () => {
+            setIsLoading(true); // ✅ start loader
+            try {
+                if (selectedFilter === 'current') {
+                    await dispatch(fetchCurrentNurseryLitterRecords(selectedFarm));
+                } else {
+                    await dispatch(fetchCurrentNurseryRecords(selectedFarm));
+                }
+            } finally {
+                setIsLoading(false); // ✅ stop loader
+            }
+        };
+
+        fetchData();
+    }, [dispatch, selectedFilter, selectedMonth, selectedYear, selectedFarm]);
 
 
 
@@ -470,7 +486,6 @@ const NurseryStage = () => {
                     },
                 }}
             />
-
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 <div className="mb-8">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
@@ -520,21 +535,24 @@ const NurseryStage = () => {
                     <div className="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
                         <div className="border-b border-gray-200">
                             <nav className="flex">
+                                {/* Current Nursery Litter */}
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                        ? 'border-green-500 text-green-600 bg-green-50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-green-500 text-green-600 bg-green-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
-                                    Current Nursery Litter({currentNurseryLitterRecords.length})
+                                    Current Nursery Litter ({currentNurseryLitterRecords.length})
                                 </button>
+
+                                {/* Current Nursery Piglets */}
                                 <button
                                     onClick={() => setSelectedFilter('nursered')}
-                                    className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'history'
-                                        ? 'border-green-500 text-green-600 bg-green-50'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                    className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'nursered'
+                                            ? 'border-green-500 text-green-600 bg-green-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
@@ -542,6 +560,7 @@ const NurseryStage = () => {
                                 </button>
                             </nav>
                         </div>
+
 
                         <div className="p-4 sm:p-6">
                             {selectedFilter === 'current' && (
@@ -552,14 +571,19 @@ const NurseryStage = () => {
                                     <p className="text-sm text-gray-600 mb-4">
                                         Click the arrow to expand and view individual piglet details. Click Edit to modify piglet information.
                                     </p>
-                                    <AdvancedTable
-                                        data={currentNurseryLitterRecords}
-                                        columns={currentRecordsColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="sowId"
-                                        onAction={handleMoveToNextStage}
-                                        customRowRenderer={renderExpandedRow}
-                                    />
+                                    {/* ✅ Loader replaces table when isLoading is true */}
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={currentNurseryLitterRecords}
+                                            columns={currentRecordsColumns}
+                                            searchPlaceholder="Search by Pig ID..."
+                                            searchKey="sowId"
+                                            onAction={handleMoveToNextStage}
+                                            customRowRenderer={renderExpandedRow}
+                                        />
+                                    )}
                                 </div>
                             )}
 
@@ -568,13 +592,18 @@ const NurseryStage = () => {
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                         Nursered Pigs
                                     </h3>
-                                    <AdvancedTable
-                                        data={currentNurseryRecords}
-                                        columns={nurseredRecordsColumns}
-                                        searchPlaceholder="Search by Pig ID..."
-                                        searchKey="pigId"
-                                        onAction={() => { }}
-                                    />
+                                    {/* ✅ Loader replaces table when isLoading is true */}
+                                    {isLoading ? (
+                                        <Loader />
+                                    ) : (
+                                        <AdvancedTable
+                                            data={currentNurseryRecords}
+                                            columns={nurseredRecordsColumns}
+                                            searchPlaceholder="Search by Pig ID..."
+                                            searchKey="pigId"
+                                            onAction={() => { }}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </div>
