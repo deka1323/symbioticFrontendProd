@@ -11,6 +11,7 @@ import {
 import { fetchCurrentFatteningRecords, fetchFatteningHistoryByMonth, moveFatteningToDried, moveFatteningToInHouse } from '../../store/actions/pigActions';
 import AdvancedTable from '../common/AdvancedTable';
 
+
 const FatteningStage = () => {
     const dispatch = useDispatch();
     const [selectedFilter, setSelectedFilter] = useState('current');
