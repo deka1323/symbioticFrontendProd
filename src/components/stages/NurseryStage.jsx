@@ -296,7 +296,7 @@ const NurseryStage = () => {
     ];
 
     // Action buttons for current records
-    const currentRecordsActions = [
+    const nurseredRecordsActions = [
         {
             key: 'move',
             label: 'Move to Fattening',
@@ -539,8 +539,8 @@ const NurseryStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('current')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'current'
-                                            ? 'border-green-500 text-green-600 bg-green-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-green-500 text-green-600 bg-green-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
@@ -551,8 +551,8 @@ const NurseryStage = () => {
                                 <button
                                     onClick={() => setSelectedFilter('nursered')}
                                     className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base font-medium border-b-2 transition-colors duration-200 ${selectedFilter === 'nursered'
-                                            ? 'border-green-500 text-green-600 bg-green-50'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-green-500 text-green-600 bg-green-50'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <History className="h-4 w-4 inline mr-2" />
@@ -601,6 +601,7 @@ const NurseryStage = () => {
                                             columns={nurseredRecordsColumns}
                                             searchPlaceholder="Search by Pig ID..."
                                             searchKey="pigId"
+                                            actionButtons={nurseredRecordsActions}
                                             onAction={() => { }}
                                         />
                                     )}

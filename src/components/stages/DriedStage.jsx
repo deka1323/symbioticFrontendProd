@@ -67,6 +67,30 @@ const DriedStage = () => {
         { key: 'inDate', label: 'In Date', sortable: true },
     ];
 
+    // Action buttons 
+    const driedRecordsActions = [
+        {
+            key: 'move',
+            label: 'Move to Fattening',
+            className: 'inline-flex items-center px-2 sm:px-3 py-1 bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
+            requiresConfirmation: true,
+            confirmationMessage: 'This will move all piglets in this litter to Fattening stage. This action cannot be reversed.',
+            disabled: (item) => isMovingPig && movingPigId === item.id,
+            render: (item) => (
+                <>
+                    {isMovingPig && movingPigId === item.id ? (
+                        <>
+                            <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-yellow-600 mr-1"></div>
+                            Moving...
+                        </>
+                    ) : (
+                        'Move to Fattening'
+                    )}
+                </>
+            )
+        }
+    ];
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Toaster position="top-right" />
@@ -115,7 +139,8 @@ const DriedStage = () => {
                                 columns={columns}
                                 searchPlaceholder="Search by Pig ID..."
                                 searchKey="pigId"
-                                actionButtons={[]}
+                                actionButtons={driedRecordsActions}
+                                onAction={() => { }}
                             />
                         </div>
                     </div>
