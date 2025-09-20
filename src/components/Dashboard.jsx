@@ -200,7 +200,7 @@ const Dashboard = () => {
             onClick={() => setShowBoarModal(true)}
             className="px-4 py-2 text-sm font-semibold border border-yellow-500 text-yellow-600 bg-white rounded-md hover:bg-yellow-50"
           >
-            Boar Details
+            Boar/Sow Details
           </button>
           <button
             onClick={() => setShowFeedModal(true)}
