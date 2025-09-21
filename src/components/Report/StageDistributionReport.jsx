@@ -24,7 +24,7 @@ const STAGES = [
   { key: "gestation", label: "Gestation", icon: TrendingUp },
   { key: "farrowing", label: "Farrowing", icon: TrendingUp },
   { key: "nursery", label: "Nursery", icon: TrendingUp },
-  { key: "dried", label: "Dried", icon: TrendingUp },
+  { key: "dried", label: "Dry", icon: TrendingUp },
   { key: "fattening", label: "Fattening", icon: TrendingUp },
 ];
 

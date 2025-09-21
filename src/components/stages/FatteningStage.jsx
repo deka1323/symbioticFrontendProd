@@ -252,7 +252,7 @@ const FatteningStage = () => {
         },
         {
             key: 'dried',
-            label: 'Send to Dried',
+            label: 'Send to Dry',
             className:
                 'inline-flex items-center px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm',
             requiresConfirmation: true,
@@ -266,7 +266,7 @@ const FatteningStage = () => {
                         Processing...
                     </>
                 ) : (
-                    'Send To Dried'
+                    'Send To Dry'
                 ),
         },
     ];

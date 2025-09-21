@@ -229,7 +229,7 @@ const Dashboard = () => {
               { title: "Farrowing", route: "/farrowing" },
               { title: "Nursery", route: "/nursery" },
               { title: "Fattening", route: "/fattening" },
-              { title: "Dried", route: "/dried" },
+              { title: "Dry", route: "/dried" },
             ].map((stage, idx) => (
               <motion.div
                 key={idx}

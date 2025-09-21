@@ -101,10 +101,10 @@ const DriedStage = () => {
                         <div>
                             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
                                 <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 mr-2 sm:mr-3" />
-                                Dried Management
+                                Dry Management
                             </h1>
                             <p className="text-gray-600 mt-1 text-sm sm:text-base">
-                                Track pigs in the dried stage
+                                Track pigs in the dry stage
                             </p>
                         </div>
                         <div className="flex space-x-2">
@@ -128,7 +128,7 @@ const DriedStage = () => {
                                     disabled
                                 >
                                     <Calendar className="h-4 w-4 inline mr-2" />
-                                    Dried ({currentDriedRecords.length})
+                                    Dry ({currentDriedRecords.length})
                                 </button>
                             </nav>
                         </div>

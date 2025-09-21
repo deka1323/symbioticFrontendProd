@@ -28,7 +28,7 @@ const Navigation = () => {
     { id: '/farrowing', label: 'Farrowing', icon: Baby },
     { id: '/nursery', label: 'Nursery', icon: Sprout },
     { id: '/fattening', label: 'Fattening', icon: TrendingUp },
-    { id: '/dried', label: 'Dried', icon: TrendingUp },
+    { id: '/dried', label: 'Dry', icon: TrendingUp },
     { id: '/reports', label: 'Reports', icon: FileText },
   ];
 
